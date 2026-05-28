@@ -84,18 +84,27 @@ Clone this repository:
 
 ```bash
 git clone <your_repo_url>
+```
 
 Install required packages:
 
+```bash
 pip install pandas matplotlib requests beautifulsoup4 pillow
+```
 
 Then simply run:
 
+```bash
 gym.pyw
+```
 
 and the widget should appear directly on your desktop.
 
-Project Structure
+---
+
+## Project Structure
+
+```text
 .
 ├── gym.pyw                     # Real-time desktop widget
 ├── gif/                        # GIF animations used by the widget
@@ -111,46 +120,60 @@ Project Structure
 │   ├── app_screenshot2.png
 │   └── avg_number_by_week.png
 └── analysis.ipynb              # Occupancy analysis & visualization
-Data Collection & Analysis
+```
+
+---
+
+## Data Collection & Analysis
 
 Since March 2026, this project has been continuously collecting gym occupancy data 24/7.
 
 Currently implemented:
 
-daily occupancy logging,
-30-minute averaged occupancy curves,
-weekday crowd pattern visualization,
-and basic historical trend analysis.
+- daily occupancy logging,
+- 30-minute averaged occupancy curves,
+- weekday crowd pattern visualization,
+- and basic historical trend analysis.
 
 This already makes it surprisingly easy to answer important scientific questions like:
 
-"When is the least painful time to go to the gym?"
+> "When is the least painful time to go to the gym?"
 
-<p align="center"> <img src="for_git_intro/avg_number_by_week.png" width="850"> <br> <em>Average number of people in the NCU gym by weekday</em> </p>
-Future Work
+<p align="center">
+  <img src="for_git_intro/avg_number_by_week.png" width="850">
+  <br>
+  <em>Average number of people in the NCU gym by weekday</em>
+</p>
+
+---
+
+## Future Work
 
 The long-term goal is to turn this from a simple widget into a predictive gym occupancy system.
 
 Future plans include incorporating:
 
-weather conditions,
-temperature,
-rainfall,
-school holidays,
-university assembly schedules,
-before/after long weekends,
-and other hidden variables that somehow affect gym crowd levels.
+- weather conditions,
+- temperature,
+- rainfall,
+- school holidays,
+- university assembly schedules,
+- before/after long weekends,
+- and other hidden variables that somehow affect gym crowd levels.
 
 Eventually, I want to train a multi-input model capable of predicting:
 
-gym occupancy 1 hour ahead,
-2 hours ahead,
-or possibly the probability of getting a bench press station without emotional damage.
+- gym occupancy 1 hour ahead,
+- 2 hours ahead,
+- or possibly the probability of getting a bench press station without emotional damage.
 
 Stay tuned.
 
-中文版
-專案介紹
+---
+
+## 中文版
+
+### 專案介紹
 
 愛健身的人應該都有這種經驗：
 
@@ -162,88 +185,126 @@ Stay tuned.
 
 現在我可以直接知道：
 
-現在是不是該立刻衝去健身，
-還是再等等，
-或乾脆乖乖留在研究室做研究。
-預覽
-<p align="center"> <img src="for_git_intro/app_screenshot.png" width="330"> <br> <em>人很多的時候：紅色提醒，建議繼續留在研究室</em> </p> <p align="center"> <img src="for_git_intro/app_screenshot2.png" width="330"> <br> <em>人數中等的時候：橘色提醒，可以考慮一下</em> </p>
-這是什麼？
+- 現在是不是該立刻衝去健身，
+- 還是再等等，
+- 或乾脆乖乖留在研究室做研究。
+
+---
+
+### 預覽
+
+<p align="center">
+  <img src="for_git_intro/app_screenshot.png" width="330">
+  <br>
+  <em>人很多的時候：紅色提醒，建議繼續留在研究室</em>
+</p>
+
+<p align="center">
+  <img src="for_git_intro/app_screenshot2.png" width="330">
+  <br>
+  <em>人數中等的時候：橘色提醒，可以考慮一下</em>
+</p>
+
+---
+
+### 這是什麼？
 
 這是一個可以常駐在桌面的即時視窗，用來監控中央大學健身房目前的人數。
 
 它會：
 
-自動抓取中央大學運動中心網站的人數資料，
-即時顯示在桌面上，
-根據人數變化自動切換背景顏色與 GIF 動畫。
+- 自動抓取中央大學運動中心網站的人數資料，
+- 即時顯示在桌面上，
+- 根據人數變化自動切換背景顏色與 GIF 動畫。
 
 某種程度上，它同時是：
 
-健身工具、
-摸魚工具、
-以及研究生逃避現實的小 side project。
-功能
-即時桌面 Widget
-永遠置頂的小視窗
-可自由拖曳
-Apple widget / trading dashboard 風格 UI
-即時人數更新
-動態背景顏色
-人數提醒系統
+- 健身工具、
+- 摸魚工具、
+- 以及研究生逃避現實的小 side project。
+
+---
+
+### 功能
+
+#### 即時桌面 Widget
+
+- 永遠置頂的小視窗
+- 可自由拖曳
+- Apple widget / trading dashboard 風格 UI
+- 即時人數更新
+- 動態背景顏色
+
+#### 人數提醒系統
 
 可自行設定人數門檻：
 
-🟢 人少 → 快去
-🟠 普通 → 可以考慮
-🔴 爆滿 → 留在研究室吧
+- 🟢 人少 → 快去
+- 🟠 普通 → 可以考慮
+- 🔴 爆滿 → 留在研究室吧
 
 同時還會：
 
-根據人數切換不同 GIF，
-人少時閃爍提醒，
-在尖峰時段提供情緒價值。
-使用方式
+- 根據人數切換不同 GIF，
+- 人少時閃爍提醒，
+- 在尖峰時段提供情緒價值。
+
+---
+
+### 使用方式
 
 下載專案後：
 
+```bash
 pip install pandas matplotlib requests beautifulsoup4 pillow
+```
 
 接著直接執行：
 
+```bash
 gym.pyw
+```
 
 桌面小工具就會直接啟動。
 
-資料分析
+---
+
+### 資料分析
 
 本專案也會記錄健身房人數資料，並透過每半小時平均的方式分析不同星期、不同時段的人數變化。
 
-<p align="center"> <img src="for_git_intro/avg_number_by_week.png" width="850"> <br> <em>不同星期的人數隨時間變化</em> </p>
+<p align="center">
+  <img src="for_git_intro/avg_number_by_week.png" width="850">
+  <br>
+  <em>不同星期的人數隨時間變化</em>
+</p>
 
 現在已經能快速回答一個非常重要的問題：
 
-「到底什麼時候去健身房比較不痛苦？」
+> 「到底什麼時候去健身房比較不痛苦？」
 
-Future Work
+---
+
+### Future Work
 
 本專案自 2026 年 3 月開始，24 小時收集中央大學健身房人數資料並記錄。
 
 目前已經完成：
 
-每日人數紀錄，
-每半小時平均分析，
-每週人數變化視覺化，
-基本歷史趨勢分析。
+- 每日人數紀錄，
+- 每半小時平均分析，
+- 每週人數變化視覺化，
+- 基本歷史趨勢分析。
 
 未來預計會加入更多因素：
 
-天氣
-溫度
-降雨
-學校放假
-週會
-連假前後
-平日與週末差異
+- 天氣
+- 溫度
+- 降雨
+- 學校放假
+- 週會
+- 連假前後
+- 平日與週末差異
 
 並建立 multi-input 模型，嘗試預測未來一小時、兩小時的中央大學健身房人數。
 
