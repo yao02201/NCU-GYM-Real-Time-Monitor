@@ -16,17 +16,26 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse, parse_qs
 from PIL import Image, ImageTk, ImageSequence
 
+
+# ===== Paths =====
+# Use the folder where this .py/.pyw file is located as the base directory.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+GIF_DIR = os.path.join(BASE_DIR, "gif")
+LOG_DIR = os.path.join(BASE_DIR, "gym_count")
+
+
+# ===== Settings =====
 PAGE_URL = "https://pe.ncu.edu.tw/about/66.html"
 REFRESH_MS = 10_000          # UI refresh every 10 sec
 LOG_INTERVAL_MS = 60_000     # save one point every 60 sec
 BLINK_MS = 450
 GIF_SIZE = (110, 110)
-LOG_DIR = "gym_count"
 
 GIF_FILES = {
-    "low": "gymtime.gif",
-    "mid": "blueguy.gif",
-    "high": "usingcomputer.gif"
+    "low": os.path.join(GIF_DIR, "gymtime.gif"),
+    "mid": os.path.join(GIF_DIR, "blueguy.gif"),
+    "high": os.path.join(GIF_DIR, "usingcomputer.gif")
 }
 
 state = {
@@ -56,10 +65,12 @@ def get_today_log_file():
 
 def ensure_log_file():
     log_file = get_today_log_file()
+
     if not os.path.exists(log_file):
         with open(log_file, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(["timestamp", "count"])
+
     return log_file
 
 
@@ -71,6 +82,7 @@ def should_log_now():
         return True
 
     elapsed = (now - state["last_logged_at"]).total_seconds()
+
     if elapsed >= LOG_INTERVAL_MS / 1000:
         state["last_logged_at"] = now
         return True
@@ -99,15 +111,21 @@ def get_csv_url():
         return state["csv_url"]
 
     try:
-        r = requests.get(PAGE_URL, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+        r = requests.get(
+            PAGE_URL,
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=10
+        )
         r.raise_for_status()
 
         soup = BeautifulSoup(r.text, "html.parser")
         iframe = soup.find("iframe")
+
         if not iframe:
             return None
 
         iframe_url = urljoin(PAGE_URL, iframe.get("src"))
+
         parsed = urlparse(iframe_url)
         path = parsed.path.replace("/pubhtml", "/pub")
         qs = parse_qs(parsed.query)
@@ -115,7 +133,11 @@ def get_csv_url():
         gid = qs.get("gid", ["0"])[0]
         rng = qs.get("range", ["A1:B10"])[0]
 
-        state["csv_url"] = f"{parsed.scheme}://{parsed.netloc}{path}?output=csv&gid={gid}&range={rng}"
+        state["csv_url"] = (
+            f"{parsed.scheme}://{parsed.netloc}{path}"
+            f"?output=csv&gid={gid}&range={rng}"
+        )
+
         return state["csv_url"]
 
     except Exception as e:
@@ -126,18 +148,26 @@ def get_csv_url():
 def fetch_count():
     try:
         csv_url = get_csv_url()
+
         if not csv_url:
             return None
 
-        r = requests.get(csv_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+        r = requests.get(
+            csv_url,
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=10
+        )
         r.raise_for_status()
 
         reader = csv.reader(io.StringIO(r.content.decode("utf-8")))
+
         for row in reader:
             row = [c.strip() for c in row]
+
             if any("重訓室" in c for c in row):
                 for c in row:
                     c = c.replace("人", "").strip()
+
                     if c.isdigit():
                         return int(c)
 
@@ -155,14 +185,19 @@ def load_gif(path):
         return [], []
 
     frames, delays = [], []
+
     try:
         img = Image.open(path)
+
         for frame in ImageSequence.Iterator(img):
             delay = frame.info.get("duration", 100) or 100
+
             frame = frame.convert("RGBA")
             frame.thumbnail(GIF_SIZE)
+
             frames.append(ImageTk.PhotoImage(frame))
             delays.append(delay)
+
     except Exception as e:
         print(f"載入 GIF 失敗 {path}:", e)
 
@@ -170,28 +205,37 @@ def load_gif(path):
 
 
 def load_all_gifs():
-    state["gif_sets"] = {k: load_gif(v) for k, v in GIF_FILES.items()}
+    state["gif_sets"] = {
+        key: load_gif(path)
+        for key, path in GIF_FILES.items()
+    }
 
 
 def select_gif_key(count):
     if count is None:
         return "mid"
+
     if count < 35:
         return "low"
+
     if count <= 45:
         return "mid"
+
     return "high"
 
 
 def animate_gif():
     frames, delays = state["gif_sets"].get(state["gif_key"], ([], []))
+
     if not frames:
         root.after(300, animate_gif)
         return
 
     i = state["gif_index"]
+
     gif_label.config(image=frames[i])
     state["gif_index"] = (i + 1) % len(frames)
+
     root.after(delays[i], animate_gif)
 
 
@@ -199,10 +243,13 @@ def animate_gif():
 def get_theme(n):
     if n is None:
         return "#f3f4f6", "#ffffff", "#111827", "#6b7280", "#d1d5db"
+
     if n < 35:
         return "#dcfce7", "#bbf7d0", "#14532d", "#166534", "#16a34a"
+
     if n <= 45:
         return "#ffedd5", "#fed7aa", "#7c2d12", "#9a3412", "#f59e0b"
+
     return "#fee2e2", "#fecaca", "#7f1d1d", "#991b1b", "#dc2626"
 
 
@@ -212,10 +259,14 @@ def apply_theme(n):
     root.configure(bg=bg_main)
     outer.config(bg=bg_main)
 
-    for w in (card, top, content, gif_label, count_label):
-        w.config(bg=bg_card)
+    for widget in (card, top, content, gif_label, count_label):
+        widget.config(bg=bg_card)
 
-    card.config(highlightbackground=border, highlightcolor=border)
+    card.config(
+        highlightbackground=border,
+        highlightcolor=border
+    )
+
     title.config(bg=bg_card, fg=fg_muted)
     close_btn.config(bg=bg_card, fg=fg_muted)
     count_label.config(bg=bg_card, fg=fg)
@@ -227,6 +278,7 @@ def apply_theme(n):
 # ===== UI Update =====
 def refresh_data():
     n = fetch_count()
+
     state["count"] = n
     state["blink_on"] = True
 
@@ -239,6 +291,7 @@ def refresh_data():
         append_log(n)
 
         new_key = select_gif_key(n)
+
         if new_key != state["gif_key"]:
             state["gif_key"] = new_key
             state["gif_index"] = 0
@@ -248,9 +301,12 @@ def refresh_data():
 
 def blink_loop():
     n = state["count"]
-    if n is not None and n <25:
+
+    if n is not None and n < 25:
         state["blink_on"] = not state["blink_on"]
-        count_label.config(fg=state["fg"] if state["blink_on"] else state["bg_card"])
+        count_label.config(
+            fg=state["fg"] if state["blink_on"] else state["bg_card"]
+        )
     else:
         count_label.config(fg=state["fg"])
 
@@ -264,7 +320,9 @@ def start_drag(e):
 
 
 def on_drag(e):
-    root.geometry(f"+{e.x_root - state['drag_x']}+{e.y_root - state['drag_y']}")
+    root.geometry(
+        f"+{e.x_root - state['drag_x']}+{e.y_root - state['drag_y']}"
+    )
 
 
 def close_app(e=None):
@@ -315,13 +373,15 @@ count_label = tk.Label(
 )
 count_label.pack(side="left")
 
-for w in (outer, card, top, title, content, gif_label, count_label):
-    w.bind("<Button-1>", start_drag)
-    w.bind("<B1-Motion>", on_drag)
+for widget in (outer, card, top, title, content, gif_label, count_label):
+    widget.bind("<Button-1>", start_drag)
+    widget.bind("<B1-Motion>", on_drag)
 
 close_btn.bind("<Button-1>", close_app)
 root.bind("<Escape>", close_app)
 
+
+# ===== Start App =====
 init_log_dir()
 load_all_gifs()
 apply_theme(None)
