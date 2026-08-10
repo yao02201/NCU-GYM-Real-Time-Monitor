@@ -251,6 +251,43 @@ class OccupancyMonitorTests(unittest.TestCase):
         )
         self.assertEqual(logger.counts, [25])
 
+    def test_zero_and_whitespace_padded_bare_counts_are_valid(self) -> None:
+        cases = [
+            ("重訓室,0\n", "0", "low", "low", True, 0),
+            ("重訓室,   35   \n", "35", "medium", "mid", False, 35),
+        ]
+
+        for feed_body, text, theme, gif_key, blink, count in cases:
+            with self.subTest(feed_body=feed_body):
+                events: list[object] = []
+                logger = RecordingLogger()
+                source = NcuOccupancySource(
+                    http_client=ScriptedHttpClient(
+                        HttpResponse(
+                            '<iframe src="https://docs.google.com/spreadsheets/d/e/x/'
+                            'pubhtml?gid=0&amp;range=A1%3AB10"></iframe>'
+                        ),
+                        HttpResponse(feed_body),
+                    )
+                )
+                monitor = OccupancyMonitor(
+                    source=source,
+                    view=RecordingView(events),
+                    logger=logger,
+                    scheduler=RecordingScheduler(events),
+                )
+
+                monitor.refresh()
+
+                self.assertEqual(
+                    events[0],
+                    (
+                        "render",
+                        WidgetPresentation(text, None, theme, gif_key, blink),
+                    ),
+                )
+                self.assertEqual(logger.counts, [count])
+
     def test_source_timeout_is_offline_and_keeps_refreshing(self) -> None:
         events: list[object] = []
         logger = RecordingLogger()
@@ -526,6 +563,8 @@ class OccupancyMonitorTests(unittest.TestCase):
             "重訓室,about 5 人\n",
             "重訓室,25+\n",
             "重訓室,25.0\n",
+            "重訓室,N/A 人\n",
+            "重訓室,N/A?\n",
         ]
 
         for feed_body in feed_bodies:
