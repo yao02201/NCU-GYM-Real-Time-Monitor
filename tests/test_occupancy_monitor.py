@@ -11,6 +11,7 @@ from occupancy_monitor import (
     NcuOccupancySource,
     OccupancyMonitor,
     OccupancyReading,
+    SourceOfflineError,
     WidgetPresentation,
 )
 
@@ -90,6 +91,11 @@ class HttpResponse:
 
     def raise_for_status(self) -> None:
         return None
+
+
+class FailedHttpResponse(HttpResponse):
+    def raise_for_status(self) -> None:
+        raise SourceOfflineError("HTTP request failed")
 
 
 class ScriptedHttpClient:
@@ -451,41 +457,60 @@ class OccupancyMonitorTests(unittest.TestCase):
                     ),
                 )
 
-    def test_non_valid_statuses_recover_to_a_later_valid_reading(self) -> None:
-        events: list[object] = []
-        logger = RecordingLogger()
-        monitor = OccupancyMonitor(
-            source=SequenceSource(
-                OccupancyReading.valid(20),
-                OccupancyReading.unavailable(),
-                OccupancyReading.offline(),
-                OccupancyReading.data_error(),
-                OccupancyReading.valid(46),
+    def test_every_non_valid_status_clears_and_recovers_to_valid(self) -> None:
+        cases = [
+            (
+                OccupancyReading.loading(),
+                WidgetPresentation("Loading...", None, "neutral", None, False),
             ),
-            view=RecordingView(events),
-            logger=logger,
-            scheduler=RecordingScheduler(events),
-        )
-
-        for _ in range(5):
-            monitor.refresh()
-
-        presentations = [
-            event[1] for event in events if isinstance(event, tuple) and event[0] == "render"
-        ]
-        self.assertEqual(
-            presentations,
-            [
-                WidgetPresentation("20", None, "low", "low", True),
+            (
+                OccupancyReading.unavailable(),
                 WidgetPresentation("N/A", None, "neutral", None, False),
+            ),
+            (
+                OccupancyReading.offline(),
                 WidgetPresentation("Offline", None, "offline", None, False),
+            ),
+            (
+                OccupancyReading.data_error(),
                 WidgetPresentation(
                     "Error", "Restart if this persists", "data-error", None, False
                 ),
-                WidgetPresentation("46", None, "high", "high", False),
-            ],
-        )
-        self.assertEqual(logger.counts, [20, 46])
+            ),
+        ]
+
+        for non_valid_reading, expected_non_valid in cases:
+            with self.subTest(status=non_valid_reading.status):
+                events: list[object] = []
+                logger = RecordingLogger()
+                monitor = OccupancyMonitor(
+                    source=SequenceSource(
+                        OccupancyReading.valid(20),
+                        non_valid_reading,
+                        OccupancyReading.valid(46),
+                    ),
+                    view=RecordingView(events),
+                    logger=logger,
+                    scheduler=RecordingScheduler(events),
+                )
+
+                for _ in range(3):
+                    monitor.refresh()
+
+                presentations = [
+                    event[1]
+                    for event in events
+                    if isinstance(event, tuple) and event[0] == "render"
+                ]
+                self.assertEqual(
+                    presentations,
+                    [
+                        WidgetPresentation("20", None, "low", "low", True),
+                        expected_non_valid,
+                        WidgetPresentation("46", None, "high", "high", False),
+                    ],
+                )
+                self.assertEqual(logger.counts, [20, 46])
 
     def test_unsupported_reachable_source_formats_are_data_errors(self) -> None:
         page = HttpResponse(
@@ -531,7 +556,7 @@ class OccupancyMonitorTests(unittest.TestCase):
                     ),
                 )
 
-    def test_page_or_feed_timeout_is_offline(self) -> None:
+    def test_page_or_feed_connectivity_failure_is_offline(self) -> None:
         page = HttpResponse(
             '<iframe src="https://docs.google.com/spreadsheets/d/e/x/'
             'pubhtml?gid=0&amp;range=A1%3AB10"></iframe>'
@@ -539,6 +564,10 @@ class OccupancyMonitorTests(unittest.TestCase):
         clients = [
             ScriptedHttpClient(TimeoutError("page timed out")),
             ScriptedHttpClient(page, TimeoutError("feed timed out")),
+            ScriptedHttpClient(ConnectionError("page connection failed")),
+            ScriptedHttpClient(page, ConnectionError("feed connection failed")),
+            ScriptedHttpClient(FailedHttpResponse("service unavailable")),
+            ScriptedHttpClient(page, FailedHttpResponse("service unavailable")),
         ]
 
         for client in clients:

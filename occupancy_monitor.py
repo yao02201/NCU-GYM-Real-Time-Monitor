@@ -18,12 +18,28 @@ from urllib.parse import parse_qs, urljoin, urlparse
 class WidgetPresentation:
     primary_text: str
     secondary_text: str | None
-    theme: str
-    gif_key: str | None
+    theme: "WidgetTheme"
+    gif_key: "GifKey | None"
     blink: bool
 
 
+class WidgetTheme(str, Enum):
+    NEUTRAL = "neutral"
+    OFFLINE = "offline"
+    DATA_ERROR = "data-error"
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+
+class GifKey(str, Enum):
+    LOW = "low"
+    MID = "mid"
+    HIGH = "high"
+
+
 class OccupancyStatus(Enum):
+    LOADING = "loading"
     VALID = "valid"
     UNAVAILABLE = "unavailable"
     OFFLINE = "offline"
@@ -34,6 +50,10 @@ class OccupancyStatus(Enum):
 class OccupancyReading:
     status: OccupancyStatus
     count: int | None = None
+
+    @classmethod
+    def loading(cls) -> "OccupancyReading":
+        return cls(OccupancyStatus.LOADING)
 
     @classmethod
     def valid(cls, count: int) -> "OccupancyReading":
@@ -194,6 +214,65 @@ class Scheduler(Protocol):
     def call_later(self, delay_ms: int, callback: Callable[[], None]) -> None: ...
 
 
+NON_VALID_PRESENTATIONS = {
+    OccupancyStatus.LOADING: WidgetPresentation(
+        primary_text="Loading...",
+        secondary_text=None,
+        theme=WidgetTheme.NEUTRAL,
+        gif_key=None,
+        blink=False,
+    ),
+    OccupancyStatus.UNAVAILABLE: WidgetPresentation(
+        primary_text="N/A",
+        secondary_text=None,
+        theme=WidgetTheme.NEUTRAL,
+        gif_key=None,
+        blink=False,
+    ),
+    OccupancyStatus.OFFLINE: WidgetPresentation(
+        primary_text="Offline",
+        secondary_text=None,
+        theme=WidgetTheme.OFFLINE,
+        gif_key=None,
+        blink=False,
+    ),
+    OccupancyStatus.DATA_ERROR: WidgetPresentation(
+        primary_text="Error",
+        secondary_text="Restart if this persists",
+        theme=WidgetTheme.DATA_ERROR,
+        gif_key=None,
+        blink=False,
+    ),
+}
+
+
+def presentation_for(reading: OccupancyReading) -> WidgetPresentation:
+    if reading.status in NON_VALID_PRESENTATIONS:
+        return NON_VALID_PRESENTATIONS[reading.status]
+
+    count = reading.count
+    if reading.status is not OccupancyStatus.VALID or count is None:
+        raise ValueError("A Valid reading must carry an occupancy count")
+
+    if count < 35:
+        theme = WidgetTheme.LOW
+        gif_key = GifKey.LOW
+    elif count <= 45:
+        theme = WidgetTheme.MEDIUM
+        gif_key = GifKey.MID
+    else:
+        theme = WidgetTheme.HIGH
+        gif_key = GifKey.HIGH
+
+    return WidgetPresentation(
+        primary_text=str(count),
+        secondary_text=None,
+        theme=theme,
+        gif_key=gif_key,
+        blink=count < 25,
+    )
+
+
 class OccupancyMonitor:
     """Run user-visible refresh cycles through one application-level seam."""
 
@@ -211,97 +290,19 @@ class OccupancyMonitor:
         self._scheduler = scheduler
 
     def start(self) -> None:
-        self._view.render(
-            WidgetPresentation(
-                primary_text="Loading...",
-                secondary_text=None,
-                theme="neutral",
-                gif_key=None,
-                blink=False,
-            )
-        )
+        self._view.render(presentation_for(OccupancyReading.loading()))
         self._scheduler.call_later(0, self.refresh)
 
     def refresh(self) -> None:
         try:
             reading = self._source.read()
+            if reading.status is OccupancyStatus.VALID:
+                if reading.count is None:
+                    raise ValueError("A Valid reading must carry an occupancy count")
+                self._logger.record(reading.count)
+            presentation = presentation_for(reading)
         except Exception:
-            reading = OccupancyReading.data_error()
-        count = reading.count
+            presentation = NON_VALID_PRESENTATIONS[OccupancyStatus.DATA_ERROR]
 
-        if reading.status is OccupancyStatus.UNAVAILABLE:
-            self._view.render(
-                WidgetPresentation(
-                    primary_text="N/A",
-                    secondary_text=None,
-                    theme="neutral",
-                    gif_key=None,
-                    blink=False,
-                )
-            )
-            self._scheduler.call_later(10_000, self.refresh)
-            return
-
-        if reading.status is OccupancyStatus.OFFLINE:
-            self._view.render(
-                WidgetPresentation(
-                    primary_text="Offline",
-                    secondary_text=None,
-                    theme="offline",
-                    gif_key=None,
-                    blink=False,
-                )
-            )
-            self._scheduler.call_later(10_000, self.refresh)
-            return
-
-        if reading.status is OccupancyStatus.DATA_ERROR:
-            self._view.render(
-                WidgetPresentation(
-                    primary_text="Error",
-                    secondary_text="Restart if this persists",
-                    theme="data-error",
-                    gif_key=None,
-                    blink=False,
-                )
-            )
-            self._scheduler.call_later(10_000, self.refresh)
-            return
-
-        if reading.status is not OccupancyStatus.VALID or count is None:
-            raise ValueError("Unsupported occupancy status")
-
-        if count < 35:
-            theme = "low"
-            gif_key = "low"
-        elif count <= 45:
-            theme = "medium"
-            gif_key = "mid"
-        else:
-            theme = "high"
-            gif_key = "high"
-
-        try:
-            self._logger.record(count)
-        except Exception:
-            self._view.render(
-                WidgetPresentation(
-                    primary_text="Error",
-                    secondary_text="Restart if this persists",
-                    theme="data-error",
-                    gif_key=None,
-                    blink=False,
-                )
-            )
-            self._scheduler.call_later(10_000, self.refresh)
-            return
-        self._view.render(
-            WidgetPresentation(
-                primary_text=str(count),
-                secondary_text=None,
-                theme=theme,
-                gif_key=gif_key,
-                blink=count < 25,
-            )
-        )
+        self._view.render(presentation)
         self._scheduler.call_later(10_000, self.refresh)
