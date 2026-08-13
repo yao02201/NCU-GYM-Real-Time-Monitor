@@ -39,6 +39,10 @@ LOG_DIR = BASE_DIR / "gym_count"
 ICON_PATH = BASE_DIR / "assets" / "ncu-gym-monitor.ico"
 BLINK_MS = 450
 GIF_SIZE = (110, 110)
+GWL_EXSTYLE = -20
+WS_EX_TOOLWINDOW = 0x00000080
+WS_EX_APPWINDOW = 0x00040000
+SWP_REFRESH_FRAME = 0x0001 | 0x0002 | 0x0004 | 0x0010 | 0x0020
 
 GIF_FILES = {
     GifKey.LOW: GIF_DIR / "gymtime.gif",
@@ -130,7 +134,7 @@ class TkWindowPort:
     def set_geometry(self, geometry: Geometry) -> None:
         self._geometry = geometry
         self._root.geometry(
-            f"{geometry.width}x{geometry.height}+{geometry.x}+{geometry.y}"
+            f"{geometry.width}x{geometry.height}{geometry.x:+d}{geometry.y:+d}"
         )
 
     def set_cursor(self, cursor: str) -> None:
@@ -160,9 +164,11 @@ class TkWindowPort:
             user32 = ctypes.windll.user32
             widget_handle = self._root.winfo_id()
             window_handle = user32.GetParent(widget_handle) or widget_handle
-            extended_style = user32.GetWindowLongW(window_handle, -20)
-            extended_style = (extended_style & ~0x00000080) | 0x00040000
-            user32.SetWindowLongW(window_handle, -20, extended_style)
+            extended_style = user32.GetWindowLongW(window_handle, GWL_EXSTYLE)
+            extended_style = (
+                extended_style & ~WS_EX_TOOLWINDOW
+            ) | WS_EX_APPWINDOW
+            user32.SetWindowLongW(window_handle, GWL_EXSTYLE, extended_style)
             user32.SetWindowPos(
                 window_handle,
                 0,
@@ -170,7 +176,7 @@ class TkWindowPort:
                 0,
                 0,
                 0,
-                0x0001 | 0x0002 | 0x0004 | 0x0010 | 0x0020,
+                SWP_REFRESH_FRAME,
             )
         except (AttributeError, OSError, tk.TclError):
             return

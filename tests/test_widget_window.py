@@ -56,6 +56,21 @@ class FailingWindowState:
 
 
 class WidgetWindowBehaviorTests(unittest.TestCase):
+    def test_malformed_or_partial_state_is_unavailable(self) -> None:
+        malformed_states = [
+            "{",
+            '{"width": 340}',
+            '{"width": "340", "height": 165, "x": 100, "y": 100}',
+            '{"width": true, "height": 165, "x": 100, "y": 100}',
+        ]
+
+        with TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "window-state.json"
+            for contents in malformed_states:
+                with self.subTest(contents=contents):
+                    path.write_text(contents, encoding="utf-8")
+                    self.assertIsNone(JsonWindowState(path).load())
+
     def test_unusable_saved_geometry_falls_back_to_safe_default(self) -> None:
         unusable = [
             None,
@@ -157,10 +172,29 @@ class WidgetWindowBehaviorTests(unittest.TestCase):
             behavior.hover_pointer(*pointer)
             self.assertEqual(window.events[-1], ("cursor", expected_cursor))
 
-        behavior.begin_pointer(200, 200, 0, 0)
-        behavior.drag_pointer(1000, 1000)
+        minimum_cases = [
+            ((0, 80), (1000, 200), Geometry(240, 165, 200, 100)),
+            ((339, 80), (-1000, 200), Geometry(240, 165, 100, 100)),
+            ((170, 0), (200, 1000), Geometry(340, 120, 100, 145)),
+            ((170, 164), (200, -1000), Geometry(340, 120, 100, 100)),
+            ((0, 0), (1000, 1000), Geometry(240, 120, 200, 145)),
+            ((339, 0), (-1000, 1000), Geometry(240, 120, 100, 145)),
+            ((0, 164), (1000, -1000), Geometry(240, 120, 200, 100)),
+            ((339, 164), (-1000, -1000), Geometry(240, 120, 100, 100)),
+        ]
+        for pointer, drag_to, expected in minimum_cases:
+            with self.subTest(minimum_pointer=pointer):
+                resized_window = RecordingWindow(Geometry(340, 165, 100, 100))
+                resized = WidgetWindowBehavior(
+                    resized_window,
+                    MemoryWindowState(),
+                    [ScreenArea(0, 0, 1920, 1080)],
+                )
+                resized.start()
+                resized.begin_pointer(200, 200, *pointer)
+                resized.drag_pointer(*drag_to)
 
-        self.assertEqual(window.current_geometry, Geometry(240, 120, 200, 145))
+                self.assertEqual(resized_window.current_geometry, expected)
 
     def test_user_can_resize_from_every_edge_and_corner(self) -> None:
         cases = [

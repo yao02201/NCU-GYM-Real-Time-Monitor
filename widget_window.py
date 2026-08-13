@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from enum import Enum, auto
 from pathlib import Path
 from typing import Callable, Protocol, Sequence
 
 
-DEFAULT_GEOMETRY = None
 MIN_WIDTH = 240
 MIN_HEIGHT = 120
 RESIZE_BORDER = 6
@@ -23,6 +23,13 @@ class Geometry:
 
 
 DEFAULT_GEOMETRY = Geometry(340, 165, 100, 100)
+
+
+class ResizeEdge(Enum):
+    NORTH = auto()
+    EAST = auto()
+    SOUTH = auto()
+    WEST = auto()
 
 
 @dataclass(frozen=True)
@@ -109,7 +116,7 @@ class WidgetWindowBehavior:
         self._is_compact: bool | None = None
         self._pointer_origin = (0, 0)
         self._geometry_origin = DEFAULT_GEOMETRY
-        self._resize_edges: frozenset[str] = frozenset()
+        self._resize_edges: frozenset[ResizeEdge] = frozenset()
 
     def start(self) -> None:
         geometry = self._load_geometry()
@@ -133,14 +140,14 @@ class WidgetWindowBehavior:
     def hover_pointer(self, local_x: int, local_y: int) -> None:
         edges = self._edges_at(local_x, local_y, self._window.geometry())
         cursors = {
-            frozenset(("west",)): "size_we",
-            frozenset(("east",)): "size_we",
-            frozenset(("north",)): "size_ns",
-            frozenset(("south",)): "size_ns",
-            frozenset(("north", "west")): "size_nw_se",
-            frozenset(("south", "east")): "size_nw_se",
-            frozenset(("north", "east")): "size_ne_sw",
-            frozenset(("south", "west")): "size_ne_sw",
+            frozenset((ResizeEdge.WEST,)): "size_we",
+            frozenset((ResizeEdge.EAST,)): "size_we",
+            frozenset((ResizeEdge.NORTH,)): "size_ns",
+            frozenset((ResizeEdge.SOUTH,)): "size_ns",
+            frozenset((ResizeEdge.NORTH, ResizeEdge.WEST)): "size_nw_se",
+            frozenset((ResizeEdge.SOUTH, ResizeEdge.EAST)): "size_nw_se",
+            frozenset((ResizeEdge.NORTH, ResizeEdge.EAST)): "size_ne_sw",
+            frozenset((ResizeEdge.SOUTH, ResizeEdge.WEST)): "size_ne_sw",
         }
         self._window.set_cursor(cursors.get(edges, "arrow"))
 
@@ -198,16 +205,16 @@ class WidgetWindowBehavior:
         local_x: int,
         local_y: int,
         geometry: Geometry,
-    ) -> frozenset[str]:
-        edges: set[str] = set()
+    ) -> frozenset[ResizeEdge]:
+        edges: set[ResizeEdge] = set()
         if local_x < RESIZE_BORDER:
-            edges.add("west")
+            edges.add(ResizeEdge.WEST)
         elif local_x >= geometry.width - RESIZE_BORDER:
-            edges.add("east")
+            edges.add(ResizeEdge.EAST)
         if local_y < RESIZE_BORDER:
-            edges.add("north")
+            edges.add(ResizeEdge.NORTH)
         elif local_y >= geometry.height - RESIZE_BORDER:
-            edges.add("south")
+            edges.add(ResizeEdge.SOUTH)
         return frozenset(edges)
 
     def _resized_geometry(
@@ -221,16 +228,16 @@ class WidgetWindowBehavior:
         x = origin.x
         y = origin.y
 
-        if "west" in self._resize_edges:
+        if ResizeEdge.WEST in self._resize_edges:
             width = max(MIN_WIDTH, origin.width - delta_x)
             x = origin.x + origin.width - width
-        elif "east" in self._resize_edges:
+        elif ResizeEdge.EAST in self._resize_edges:
             width = max(MIN_WIDTH, origin.width + delta_x)
 
-        if "north" in self._resize_edges:
+        if ResizeEdge.NORTH in self._resize_edges:
             height = max(MIN_HEIGHT, origin.height - delta_y)
             y = origin.y + origin.height - height
-        elif "south" in self._resize_edges:
+        elif ResizeEdge.SOUTH in self._resize_edges:
             height = max(MIN_HEIGHT, origin.height + delta_y)
 
         return Geometry(width, height, x, y)
