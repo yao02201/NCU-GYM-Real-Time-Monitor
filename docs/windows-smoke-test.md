@@ -21,6 +21,24 @@ Run this bounded test on the target Windows account after automated tests pass.
 - [ ] Confirm Setup created no login startup entry, scheduled task, Windows
       service, or tray process.
 
+### Widget window controls
+
+- [ ] Confirm the borderless Widget has a minimize control to the left of close
+      and that both controls provide hover feedback.
+- [ ] Minimize the Widget and confirm it remains available from the Windows
+      taskbar with the NCU Gym icon.
+- [ ] Restore it from the taskbar and confirm it is borderless and topmost
+      without an additional focus-forcing action.
+- [ ] Resize from all four edges and all four corners, confirming the pointer
+      shows the matching resize cursor and drag-to-move still works elsewhere.
+- [ ] Confirm the Widget stops shrinking at `240×120`.
+- [ ] Confirm the occupancy GIF hides below `300px` wide, returns at or above
+      `300px`, and does not scale when the Widget grows.
+- [ ] Move and resize the Widget, close it, and confirm the next launch restores
+      the last normal geometry.
+- [ ] Change the connected-display layout or provide an off-screen saved
+      position and confirm startup falls back to the safe `340×165` geometry.
+
 ## Result
 
 Status: **Passed on 2026-08-07** on the target Windows account.
@@ -44,3 +62,20 @@ Status: **Passed on 2026-08-07** on the target Windows account.
   `.venv` was restored immediately afterward.
 - No matching login Run entry, Startup-folder shortcut, scheduled task, Windows
   service, or tray process was created.
+
+## Widget window control result
+
+Status: **Targeted native checks passed on 2026-08-13** on the target Windows
+account.
+
+- An isolated real Tk/Win32 Widget passed control hover, edge cursor,
+  taskbar minimization, restoration, borderless restoration, topmost
+  restoration, taskbar application-window style, compact-layout detection,
+  and responsive GIF hiding checks.
+- The connected-display boundary enumerated both current Windows work areas.
+- The normal Launcher correctly declined to create a second Monitor instance
+  because a Monitor instance dating from 2026-08-11 was already active. That
+  existing user process was left running and was not used to judge the newly
+  loaded Widget code.
+- The remaining checkbox procedure is retained for a hands-on pass after the
+  existing Monitor instance is closed normally.
