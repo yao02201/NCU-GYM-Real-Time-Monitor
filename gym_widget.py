@@ -43,6 +43,8 @@ GWL_EXSTYLE = -20
 WS_EX_TOOLWINDOW = 0x00000080
 WS_EX_APPWINDOW = 0x00040000
 SWP_REFRESH_FRAME = 0x0001 | 0x0002 | 0x0004 | 0x0010 | 0x0020
+PER_MONITOR_AWARE_V2 = -4
+PROCESS_PER_MONITOR_DPI_AWARE = 2
 
 GIF_FILES = {
     GifKey.LOW: GIF_DIR / "gymtime.gif",
@@ -248,6 +250,39 @@ def _windows_screen_areas() -> list[ScreenArea]:
     except (AttributeError, OSError):
         return []
     return areas
+
+
+def enable_per_monitor_dpi_awareness() -> None:
+    """Keep pointer and window coordinates continuous across mixed-DPI screens."""
+    if sys.platform != "win32":
+        return
+
+    try:
+        set_awareness_context = (
+            ctypes.windll.user32.SetProcessDpiAwarenessContext
+        )
+        set_awareness_context.argtypes = (ctypes.c_void_p,)
+        set_awareness_context.restype = ctypes.c_bool
+        if set_awareness_context(ctypes.c_void_p(PER_MONITOR_AWARE_V2)):
+            return
+    except (AttributeError, OSError):
+        pass
+
+    try:
+        if (
+            ctypes.windll.shcore.SetProcessDpiAwareness(
+                PROCESS_PER_MONITOR_DPI_AWARE
+            )
+            == 0
+        ):
+            return
+    except (AttributeError, OSError):
+        pass
+
+    try:
+        ctypes.windll.user32.SetProcessDPIAware()
+    except (AttributeError, OSError):
+        return
 
 
 class TkWidgetView:
@@ -547,6 +582,7 @@ class TkWidgetView:
 
 
 def main() -> None:
+    enable_per_monitor_dpi_awareness()
     root = tk.Tk()
     view = TkWidgetView(root)
     monitor = OccupancyMonitor(
