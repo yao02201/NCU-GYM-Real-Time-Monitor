@@ -7,6 +7,16 @@ from unittest.mock import Mock, patch
 import gym_widget
 
 
+class TkWindowPortTests(unittest.TestCase):
+    def test_negative_virtual_desktop_coordinates_are_absolute(self) -> None:
+        root = Mock()
+        window = gym_widget.TkWindowPort(root)
+
+        window.set_geometry(gym_widget.Geometry(480, 220, -300, -40))
+
+        root.geometry.assert_called_once_with("480x220+-300+-40")
+
+
 class GymWidgetStartupTests(unittest.TestCase):
     def test_enables_per_monitor_v2_when_windows_supports_it(self) -> None:
         set_context = Mock(return_value=True)

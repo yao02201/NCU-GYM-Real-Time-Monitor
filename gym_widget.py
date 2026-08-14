@@ -136,7 +136,7 @@ class TkWindowPort:
     def set_geometry(self, geometry: Geometry) -> None:
         self._geometry = geometry
         self._root.geometry(
-            f"{geometry.width}x{geometry.height}{geometry.x:+d}{geometry.y:+d}"
+            f"{geometry.width}x{geometry.height}+{geometry.x}+{geometry.y}"
         )
 
     def set_cursor(self, cursor: str) -> None:
