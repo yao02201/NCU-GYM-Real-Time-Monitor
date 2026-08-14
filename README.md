@@ -86,19 +86,32 @@ Clone this repository:
 git clone <your_repo_url>
 ```
 
-Install required packages:
+On Windows, run the one-time Setup from PowerShell:
 
-```bash
-pip install pandas matplotlib requests beautifulsoup4 pillow
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\windows\Setup-NCUGymMonitor.ps1
 ```
 
-Then simply run:
+Setup finds a suitable regular Python installation or securely installs an official
+per-user CPython runtime when needed. It then creates the Project environment,
+installs the Widget runtime dependencies, and adds an **NCU Gym Monitor** shortcut
+with a green dumbbell icon to your desktop.
 
-```bash
-gym.pyw
+Double-click the Desktop shortcut to start the Widget without a command prompt
+flashing or remaining visible.
+Only one Monitor instance can run at a time. If the checkout is moved or the
+Project environment is damaged, rerun Setup from the checkout's new location.
+
+For development without the Desktop shortcut:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-runtime.txt
+.\.venv\Scripts\pythonw.exe .\monitor_entry.pyw
 ```
 
-and the widget should appear directly on your desktop.
+Setup does not create a Windows login startup entry, scheduled task, service, or
+tray process. See [Windows Setup and recovery](docs/windows-setup.md) for details.
 
 ---
 
