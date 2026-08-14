@@ -65,17 +65,15 @@ Status: **Passed on 2026-08-07** on the target Windows account.
 
 ## Widget window control result
 
-Status: **Targeted native checks passed on 2026-08-13** on the target Windows
-account.
+Status: **Passed on 2026-08-14** on the target Windows account.
 
 - An isolated real Tk/Win32 Widget passed control hover, edge cursor,
   taskbar minimization, restoration, borderless restoration, topmost
   restoration, taskbar application-window style, compact-layout detection,
   and responsive GIF hiding checks.
 - The connected-display boundary enumerated both current Windows work areas.
-- The normal Launcher correctly declined to create a second Monitor instance
-  because a Monitor instance dating from 2026-08-11 was already active. That
-  existing user process was left running and was not used to judge the newly
-  loaded Widget code.
-- The remaining checkbox procedure is retained for a hands-on pass after the
-  existing Monitor instance is closed normally.
+- With the previous Monitor instance closed, the real Desktop shortcut launched
+  the newly loaded Widget through the checkout's `.venv`. A normal close
+  released the instance guard, and a second shortcut launch opened normally.
+- Both shortcut-launched Widgets closed normally, leaving no Monitor process
+  behind. The previously blocked repeated-launch instance test also passed.
