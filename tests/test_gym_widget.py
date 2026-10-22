@@ -60,7 +60,6 @@ class GymWidgetTests(unittest.TestCase):
         self.assertTrue(compact["compact"])
         self.assertFalse(compact["chart"])
         self.assertTrue(normal["gif"])
-        self.assertTrue(normal["meter"])
         self.assertFalse(normal["chart"])
         self.assertTrue(expanded["chart"])
 
@@ -101,7 +100,7 @@ class GymWidgetTests(unittest.TestCase):
                 flowers.add(theme["flower"])
                 flower_layouts.add(theme["flower_layout"])
                 self.assertNotEqual(theme["card"], theme["text"])
-                self.assertEqual(theme["label"], "舒適")
+                self.assertEqual(theme["label"], "Comfortable")
             self.assertEqual(len(cards), 3)
             self.assertEqual(len(flowers), 3)
             self.assertEqual(flower_layouts, {"staggered", "bottom", "diagonal"})

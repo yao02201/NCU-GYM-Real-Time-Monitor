@@ -60,13 +60,12 @@ AUTOSTART_VALUE_NAME = "NCUGymRealTimeMonitor"
 
 THEME_PALETTES = {
     "morandi_lace": {
-        "name": "莫蘭迪玫瑰",
+        "name": "Morandi Rose",
         "window": "#DED1E5",
         "card": "#F4EAF1",
         "text": "#3F2D41",
         "muted": "#7D687E",
         "line": "#D8C4D5",
-        "track": "#E4D2E0",
         "series": "#9B72CF",
         "series_soft": "#E7D9F0",
         "threshold": "#62A083",
@@ -78,20 +77,19 @@ THEME_PALETTES = {
         "flower_center": "#886885",
         "swatch": "#B997B4",
         "states": {
-            "loading": ("#A487A7", "#604B63", "#E6D7E7", "讀取中"),
-            "comfortable": ("#5E9A7E", "#315E4A", "#D7EADF", "舒適"),
-            "moderate": ("#D58B62", "#75442E", "#F2DDD0", "稍多人"),
-            "busy": ("#CC6680", "#7A3448", "#F0D5DE", "較擁擠"),
+            "loading": ("#A487A7", "#604B63", "#E6D7E7", "Loading"),
+            "comfortable": ("#5E9A7E", "#315E4A", "#D7EADF", "Comfortable"),
+            "moderate": ("#D58B62", "#75442E", "#F2DDD0", "Getting busy"),
+            "busy": ("#CC6680", "#7A3448", "#F0D5DE", "Crowded"),
         },
     },
     "peach_cream": {
-        "name": "奶油小花",
+        "name": "Buttercream Blossom",
         "window": "#E6D5CE",
         "card": "#F5EAE4",
         "text": "#493532",
         "muted": "#846B65",
         "line": "#DDC6BC",
-        "track": "#E8D5CC",
         "series": "#C77C71",
         "series_soft": "#EED8D1",
         "threshold": "#6E9A7D",
@@ -103,20 +101,19 @@ THEME_PALETTES = {
         "flower_center": "#D99A69",
         "swatch": "#D49A8B",
         "states": {
-            "loading": ("#B18A82", "#684D48", "#E9D7D1", "讀取中"),
-            "comfortable": ("#639477", "#365B48", "#D9E7DD", "舒適"),
-            "moderate": ("#CC875B", "#75462E", "#F0D9C9", "稍多人"),
-            "busy": ("#C66076", "#793748", "#EED3DA", "較擁擠"),
+            "loading": ("#B18A82", "#684D48", "#E9D7D1", "Loading"),
+            "comfortable": ("#639477", "#365B48", "#D9E7DD", "Comfortable"),
+            "moderate": ("#CC875B", "#75462E", "#F0D9C9", "Getting busy"),
+            "busy": ("#C66076", "#793748", "#EED3DA", "Crowded"),
         },
     },
     "blush_pink": {
-        "name": "櫻花粉霧",
+        "name": "Cherry Blush",
         "window": "#F1DDE2",
         "card": "#F9EAED",
         "text": "#51383D",
         "muted": "#8A6D74",
         "line": "#E8CAD1",
-        "track": "#F0D9DE",
         "series": "#D58A9D",
         "series_soft": "#F5DDE3",
         "threshold": "#779984",
@@ -128,10 +125,10 @@ THEME_PALETTES = {
         "flower_center": "#AF5066",
         "swatch": "#EDACBA",
         "states": {
-            "loading": ("#C18B97", "#704D55", "#EFD8DD", "讀取中"),
-            "comfortable": ("#66917A", "#385B4A", "#D8E6DE", "舒適"),
-            "moderate": ("#C88A61", "#71472F", "#EFDBC9", "稍多人"),
-            "busy": ("#D0647D", "#7A3A49", "#F2D4DB", "較擁擠"),
+            "loading": ("#C18B97", "#704D55", "#EFD8DD", "Loading"),
+            "comfortable": ("#66917A", "#385B4A", "#D8E6DE", "Comfortable"),
+            "moderate": ("#C88A61", "#71472F", "#EFDBC9", "Getting busy"),
+            "busy": ("#D0647D", "#7A3A49", "#F2D4DB", "Crowded"),
         },
     },
 }
@@ -354,14 +351,14 @@ def fetch_count():
             last_status = OccupancyStatus.DATA_ERROR
             state["csv_url"] = None
 
-    print("fetch_count 錯誤:", last_error)
+    print("fetch_count error:", last_error)
     return OccupancyReading(last_status, detail=str(last_error))
 
 
 # ===== GIF =====
 def load_gif(path):
     if not os.path.exists(path):
-        print("缺少 GIF:", path)
+        print("Missing GIF:", path)
         return [], []
 
     frames, delays = [], []
@@ -379,7 +376,7 @@ def load_gif(path):
             delays.append(delay)
 
     except Exception as e:
-        print(f"載入 GIF 失敗 {path}:", e)
+        print(f"Failed to load GIF {path}:", e)
 
     return frames, delays
 
@@ -673,11 +670,6 @@ def apply_theme(n):
         count_label,
         unit_label,
         trend_label,
-        meter_section,
-        meter_header,
-        meter_label,
-        meter_value_label,
-        occupancy_canvas,
         chart_section,
         chart_header,
         chart_title,
@@ -698,8 +690,6 @@ def apply_theme(n):
     compact_count_label.config(fg=theme["text"])
     compact_unit_label.config(fg=theme["muted"])
     compact_dot.config(bg=theme["card"], fg=theme["accent"])
-    meter_label.config(fg=theme["muted"])
-    meter_value_label.config(fg=theme["accent_text"])
     chart_title.config(fg=theme["text"])
     resize_grip.config(fg=theme["muted"])
     chart_canvas.config(
@@ -717,7 +707,6 @@ def apply_theme(n):
     state["bg_card"] = theme["card"]
     draw_theme_picker()
     draw_ornament()
-    draw_occupancy_meter()
 
 
 # ===== UI Update =====
@@ -744,7 +733,7 @@ def poll_fetch():
     try:
         reading = future.result()
     except Exception as exc:
-        print("背景更新錯誤:", exc)
+        print("Background refresh error:", exc)
         reading = OccupancyReading(OccupancyStatus.DATA_ERROR, detail=str(exc))
 
     apply_count(reading)
@@ -756,13 +745,13 @@ def apply_count(reading):
             apply_theme(None)
             if reading.status is OccupancyStatus.UNAVAILABLE:
                 count_var.set("—")
-                badge_text = "暫無資料"
+                badge_text = "No data"
             elif reading.status is OccupancyStatus.OFFLINE:
                 count_var.set("—")
-                badge_text = "離線"
+                badge_text = "Offline"
             else:
                 count_var.set("—")
-                badge_text = "資料異常"
+                badge_text = "Data issue"
             theme = state["theme"]
             set_status_badge(
                 badge_text,
@@ -773,7 +762,7 @@ def apply_count(reading):
         else:
             paused = get_theme(None)
             set_status_badge(
-                "暫停更新",
+                "Update paused",
                 paused["accent"],
                 paused["accent_soft"],
                 paused["accent_text"],
@@ -791,7 +780,6 @@ def apply_count(reading):
     count_var.set(str(n))
     append_log(n, state["last_updated_at"])
     update_trend_display()
-    draw_occupancy_meter()
     draw_chart()
 
     new_key = select_gif_key(n)
@@ -804,79 +792,20 @@ def update_trend_display():
     theme = state.get("theme") or get_theme(state.get("count"))
     trend = estimate_trend(state["today_points"])
     if trend is None:
-        trend_var.set("趨勢資料累積中")
+        trend_var.set("Collecting trend data…")
         trend_label.config(fg=theme["muted"])
         return
 
     direction, rate = trend
     if direction == "rising":
-        trend_var.set(f"↗ {rate:+.1f} 人 / 10 min")
+        trend_var.set(f"↗ {rate:+.1f} people / 10 min")
         trend_label.config(fg=theme["trend_up"])
     elif direction == "falling":
-        trend_var.set(f"↘ {rate:+.1f} 人 / 10 min")
+        trend_var.set(f"↘ {rate:+.1f} people / 10 min")
         trend_label.config(fg=theme["trend_down"])
     else:
-        trend_var.set(f"→ {rate:+.1f} 人 / 10 min · 持平")
+        trend_var.set(f"→ {rate:+.1f} people / 10 min · Steady")
         trend_label.config(fg=theme["muted"])
-
-
-def draw_occupancy_meter():
-    """Draw a compact occupancy scale with an explicit comfort threshold."""
-
-    if "occupancy_canvas" not in globals():
-        return
-    theme = state.get("theme") or get_theme(state.get("count"))
-    occupancy_canvas.delete("all")
-    width = max(occupancy_canvas.winfo_width(), 220)
-    left, right, y = 6, width - 6, 8
-    display_max = 60
-    threshold_x = left + COMFORT_THRESHOLD / display_max * (right - left)
-
-    occupancy_canvas.create_line(
-        left,
-        y,
-        right,
-        y,
-        fill=theme["track"],
-        width=8,
-        capstyle=tk.ROUND,
-    )
-    count = state.get("count")
-    if count is not None:
-        value_x = left + min(count, display_max) / display_max * (right - left)
-        occupancy_canvas.create_line(
-            left,
-            y,
-            max(left + 2, value_x),
-            y,
-            fill=theme["accent"],
-            width=8,
-            capstyle=tk.ROUND,
-        )
-        occupancy_canvas.create_oval(
-            value_x - 4,
-            y - 4,
-            value_x + 4,
-            y + 4,
-            fill=theme["accent"],
-            outline=theme["card"],
-            width=2,
-        )
-    occupancy_canvas.create_line(
-        threshold_x,
-        y - 7,
-        threshold_x,
-        y + 8,
-        fill=theme["threshold"],
-        width=1,
-    )
-    occupancy_canvas.create_text(
-        threshold_x,
-        24,
-        text="30",
-        fill=theme["muted"],
-        font=("Segoe UI", 9),
-    )
 
 
 def build_chart_area_coordinates(coordinates, bottom):
@@ -943,7 +872,7 @@ def draw_chart():
         chart_canvas.create_text(
             width / 2,
             height / 2,
-            text="今天尚無營業時間內的資料",
+            text="No opening-hours data yet today",
             fill=theme["muted"],
             font=("Segoe UI", 9),
         )
@@ -1052,7 +981,6 @@ def layout_visibility(width, height):
         "compact": compact,
         "chart": not compact and width >= CHART_MIN_SIZE[0] and height >= CHART_MIN_SIZE[1],
         "gif": not compact and width >= 380 and height >= 220,
-        "meter": not compact and width >= 270 and height >= 205,
     }
 
 
@@ -1068,7 +996,6 @@ def update_responsive_layout(e=None):
     compact = visibility["compact"]
     show_chart = visibility["chart"]
     show_gif = visibility["gif"]
-    show_meter = visibility["meter"]
 
     if compact:
         full_body.pack_forget()
@@ -1087,25 +1014,18 @@ def update_responsive_layout(e=None):
         elif not show_gif:
             gif_label.pack_forget()
 
-        if show_meter and not meter_section.winfo_manager():
-            meter_section.pack(fill="x", padx=16, pady=(0, 4), after=content)
-        elif not show_meter:
-            meter_section.pack_forget()
-
         if show_chart and not chart_section.winfo_manager():
             chart_section.pack(
                 fill="both",
                 expand=True,
                 padx=16,
                 pady=(4, 12),
-                after=meter_section if meter_section.winfo_manager() else trend_label,
+                after=trend_label,
             )
         elif not show_chart:
             chart_section.pack_forget()
 
     state["chart_visible"] = show_chart
-    if show_meter:
-        draw_occupancy_meter()
     if show_chart:
         draw_chart()
 
@@ -1128,7 +1048,7 @@ def open_dashboard():
     if getattr(sys, "frozen", False):
         messagebox.showinfo(
             "NCU Gym Monitor",
-            "封裝版本尚未包含歷史分析程式。",
+            "The history dashboard is not included in this packaged build.",
         )
         return
 
@@ -1159,7 +1079,7 @@ def is_autostart_enabled():
 
 def set_autostart(enabled):
     if os.name != "nt":
-        raise OSError("開機自啟目前只支援 Windows")
+        raise OSError("Launch at startup is currently supported on Windows only.")
 
     import winreg
 
@@ -1189,7 +1109,7 @@ def toggle_autostart():
         set_autostart(bool(autostart_var.get()))
     except OSError as exc:
         autostart_var.set(False)
-        messagebox.showerror("無法更新開機自啟", str(exc))
+        messagebox.showerror("Unable to update startup settings", str(exc))
 
 
 def show_context_menu(e):
@@ -1298,8 +1218,7 @@ def main():
     global top, title, status_badge, theme_picker_canvas
     global minimize_btn, close_btn, content
     global gif_label, metrics, eyebrow_label, count_row, count_var, count_label
-    global unit_label, trend_var, trend_label, meter_section, meter_header
-    global meter_label, meter_value_label, occupancy_canvas, chart_section
+    global unit_label, trend_var, trend_label, chart_section
     global chart_header, chart_title, chart_canvas, resize_grip
     global autostart_var, context_menu
     global executor, window_behavior
@@ -1365,7 +1284,7 @@ def main():
     compact_count_label.pack(side="left")
     compact_unit_label = tk.Label(
         compact_count_row,
-        text="人",
+        text="ppl",
         font=("Segoe UI", 12),
     )
     compact_unit_label.pack(side="left", anchor="s", pady=(0, 10))
@@ -1385,7 +1304,7 @@ def main():
 
     status_badge = tk.Label(
         top,
-        text="●  讀取中",
+        text="●  Loading",
         font=("Segoe UI", 9, "bold"),
         padx=8,
         pady=3,
@@ -1429,7 +1348,7 @@ def main():
 
     eyebrow_label = tk.Label(
         metrics,
-        text="目前人數",
+        text="CURRENT COUNT",
         font=("Segoe UI", 10, "bold"),
         anchor="w",
     )
@@ -1446,13 +1365,13 @@ def main():
     count_label.pack(side="left")
     unit_label = tk.Label(
         count_row,
-        text="人",
+        text="people",
         font=("Segoe UI", 13),
         anchor="w",
     )
     unit_label.pack(side="left", anchor="s", pady=(0, 10), padx=(4, 0))
 
-    trend_var = tk.StringVar(value="趨勢資料累積中")
+    trend_var = tk.StringVar(value="Collecting trend data…")
     trend_label = tk.Label(
         full_body,
         textvariable=trend_var,
@@ -1465,37 +1384,12 @@ def main():
 
     trend_label.pack(fill="x", padx=16, pady=(0, 7))
 
-    meter_section = tk.Frame(full_body)
-    meter_section.pack(fill="x", padx=16, pady=(0, 4))
-    meter_header = tk.Frame(meter_section)
-    meter_header.pack(fill="x")
-    meter_label = tk.Label(
-        meter_header,
-        text="人數區間",
-        font=("Segoe UI", 9),
-        anchor="w",
-    )
-    meter_label.pack(side="left")
-    meter_value_label = tk.Label(
-        meter_header,
-        text="舒適線 30 人",
-        font=("Segoe UI", 9, "bold"),
-        anchor="e",
-    )
-    meter_value_label.pack(side="right")
-    occupancy_canvas = tk.Canvas(
-        meter_section,
-        height=30,
-        highlightthickness=0,
-    )
-    occupancy_canvas.pack(fill="x")
-
     chart_section = tk.Frame(full_body)
     chart_header = tk.Frame(chart_section)
     chart_header.pack(fill="x", pady=(0, 6))
     chart_title = tk.Label(
         chart_header,
-        text="今日人數走勢",
+        text="TODAY'S OCCUPANCY",
         font=("Segoe UI", 11, "bold"),
         anchor="w",
     )
@@ -1541,15 +1435,15 @@ def main():
 
     autostart_var = tk.BooleanVar(value=is_autostart_enabled())
     context_menu = tk.Menu(root, tearoff=0)
-    context_menu.add_command(label="開啟歷史分析", command=open_dashboard)
+    context_menu.add_command(label="Open history dashboard", command=open_dashboard)
     context_menu.add_separator()
     context_menu.add_checkbutton(
-        label="開機時自動啟動",
+        label="Launch at startup",
         variable=autostart_var,
         command=toggle_autostart,
     )
     context_menu.add_separator()
-    context_menu.add_command(label="結束", command=close_app)
+    context_menu.add_command(label="Exit", command=close_app)
 
     window_behavior = WidgetWindowBehavior(
         TkWindowPort(root),
