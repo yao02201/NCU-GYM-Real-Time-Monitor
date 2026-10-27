@@ -1133,17 +1133,32 @@ def update_responsive_layout(e=None):
             full_body.pack(fill="both", expand=True, padx=14, pady=ORNAMENT_HEIGHT)
 
         if show_gif and not gif_label.winfo_manager():
-            gif_label.pack(side="right", padx=(16, 0), after=metrics)
+            gif_label.pack(side="right", padx=(10, 0), after=metrics)
         elif not show_gif:
             gif_label.pack_forget()
 
-        if show_chart and not chart_section.winfo_manager():
+        # Put the trend beneath the count instead of below the taller GIF.
+        # Pack into the metrics descendant only when its text fits in full.
+        content_width = width - 2 * (8 + 1 + 14 + 16)
+        available_width = content_width - (gif_label.winfo_reqwidth() + 10 if show_gif else 0)
+        inline_trend = available_width >= trend_label.winfo_reqwidth()
+        trend_container = metrics if inline_trend else full_body
+        current_container = trend_label.pack_info().get("in") if trend_label.winfo_manager() else None
+        trend_moved = str(current_container) != str(trend_container)
+        if trend_moved:
+            trend_label.pack_forget()
+            if inline_trend:
+                trend_label.pack(in_=metrics, fill="x", pady=(4, 0))
+            else:
+                trend_label.pack(in_=full_body, fill="x", padx=16, pady=(0, 3), after=content)
+
+        if show_chart and (not chart_section.winfo_manager() or trend_moved):
             chart_section.pack(
                 fill="both",
                 expand=True,
                 padx=16,
                 pady=(2, 12),
-                after=trend_label,
+                after=content if inline_trend else trend_label,
             )
         elif not show_chart:
             chart_section.pack_forget()
@@ -1498,7 +1513,7 @@ def main():
     )
 
     gif_label = tk.Label(content)
-    gif_label.pack(side="right", padx=(16, 0))
+    gif_label.pack(side="right", padx=(10, 0))
 
     trend_label.pack(fill="x", padx=16, pady=(0, 3))
 

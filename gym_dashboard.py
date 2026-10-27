@@ -238,6 +238,13 @@ class GymDashboard:
             self._draw_comfort_heatmap(summary)
         else:
             self._draw_daily_summary(opening)
+        self.axis.tick_params(axis="both", labelsize=12)
+        self.axis.xaxis.label.set_size(14)
+        self.axis.yaxis.label.set_size(14)
+        self.axis.title.set_fontsize(16)
+        if self.colorbar is not None:
+            self.colorbar.ax.tick_params(labelsize=12)
+            self.colorbar.ax.yaxis.label.set_size(14)
         self.axis.grid(True, alpha=0.2)
 
     def _draw_recent_days(self, opening):
@@ -254,7 +261,7 @@ class GymDashboard:
         self.axis.set_title("選取區間最近 7 個有資料日的人數走勢")
         self.axis.set_ylabel("人數")
         if dates:
-            self.axis.legend(fontsize=8, ncol=2)
+            self.axis.legend(fontsize=11, ncol=2)
 
     def _draw_weekday_average(self, opening):
         data = opening.copy()
@@ -273,7 +280,7 @@ class GymDashboard:
         self.axis.axhline(COMFORT_THRESHOLD, color="#16a34a", linestyle="--", label="30 人")
         self.axis.set_title("各星期的 10 分鐘平均走勢（每天等權）")
         self.axis.set_ylabel("平均人數")
-        self.axis.legend(fontsize=8, ncol=2)
+        self.axis.legend(fontsize=11, ncol=2)
 
     def _draw_comfort_heatmap(self, summary):
         if summary.empty:
@@ -293,6 +300,8 @@ class GymDashboard:
         self.axis.set_yticks(range(7))
         self.axis.set_yticklabels([WEEKDAY_NAMES[i] for i in range(7)])
         self.axis.set_title("一小時舒適成功率熱圖")
+        self.axis.set_xlabel("開始時間")
+        self.axis.set_ylabel("星期")
         self.colorbar = self.figure.colorbar(
             image,
             ax=self.axis,
@@ -312,9 +321,10 @@ class GymDashboard:
         self.axis.plot(daily.index, daily["p90"], linewidth=1.5, label="每日 P90")
         self.axis.axhline(COMFORT_THRESHOLD, color="#16a34a", linestyle="--", label="30 人")
         self.axis.set_title("每日平均與第 90 百分位人數")
+        self.axis.set_xlabel("日期")
         self.axis.set_ylabel("人數")
         self.axis.tick_params(axis="x", rotation=45)
-        self.axis.legend()
+        self.axis.legend(fontsize=11)
 
     def _format_time_axis(self):
         ticks = list(range(9 * 60, 21 * 60, 60))
