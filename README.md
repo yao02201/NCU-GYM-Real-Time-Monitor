@@ -1,82 +1,108 @@
 # NCU GYM Real-Time Monitor
 
-中央大學健身房即時人數小工具與歷史分析介面。目標很簡單：**找出一天中適合舒服健身一小時的時段。**
+**Find a quieter hour. Spend less time waiting for equipment.**
 
-> Live occupancy widget and historical dashboard for finding a comfortable one-hour workout window.
+A Windows desktop widget for National Central University's weight room: live occupancy, animated reactions, today's crowd curve, and a historical dashboard to help choose your next workout time.
 
-## 實際介面
+## Preview
 
-<p align="center">
-  <img src="for_git_intro/widget_current.png" width="520" alt="Current NCU Gym desktop widget">
-</p>
+<table>
+  <tr>
+    <td align="center"><img src="for_git_intro/widget_current.png" width="360" alt="Midnight Monitor dark theme"><br><b>Midnight Monitor</b></td>
+    <td align="center"><img src="for_git_intro/widget_morandi.png" width="360" alt="Morandi Violet theme"><br><b>Morandi Violet</b></td>
+  </tr>
+</table>
 
-視窗可自由縮放：小尺寸只保留即時人數；放大後顯示 GIF、近期趨勢與當日折線圖。上方三個色點可切換主題。
+*Actual application screenshots with demo occupancy data. The widget UI is in English; the history dashboard is currently in Traditional Chinese.*
 
-## 統計結果展示
+## What it does
 
-### 不同星期的人數走勢
+- Live count, crowd status, GIFs, and recent change in `people / 10 min`.
+- Drag across monitors, resize to a count-only view, or expand for today's chart.
+- Four themes—Morandi Violet, Botanical Cream, Cherry Blush, and Midnight Monitor—plus always-on-top mode and optional Windows startup.
+- Date-range analysis, weekday curves, comfort heatmap, and PNG export.
 
-![Average gym occupancy by weekday](for_git_intro/weekday_average.png)
+| Occupancy | Widget status | Animation folder |
+|---|---|---|
+| ≤30 people | `Gym time!` | `gif/low/` |
+| 31–45 people | `fuwaa` | `gif/mid/` |
+| ≥46 people | `Stay in lab` | `gif/high/` |
+| No current reading | `No data` / connection status | `gif/close/` |
 
-虛線是 30 人舒適門檻。圖表以每天等權方式計算，避免資料較多的單一天過度影響結果。
+Add your GIFs or images to these folders. Each file plays for **10 seconds**, then the next one plays; the category loops until the occupancy changes.
 
-### 舒適一小時機率
+## Historical results
 
-![Comfortable 60-minute workout heatmap](for_git_intro/comfort_heatmap.png)
+![Weekday average occupancy](for_git_intro/weekday_average.png)
 
-綠色代表該時段較常符合舒適條件，星號是目前資料中各星期表現最佳的開始時間。這是歷史觀測結果，不是未來預測。
+Ten-minute weekday averages with equal weight per day. The dashed line marks 30 people.
 
-## 主要功能
+![Probability of a comfortable one-hour workout](for_git_intro/comfort_heatmap.png)
 
-- 即時顯示重訓室人數，並依擁擠程度切換狀態與 GIF
-- 可拖移、跨螢幕、自由縮放與縮到只剩人數
-- 顯示當日人數折線、最新資料時間與 `people / 10 min` 趨勢
-- 三種柔和配色與花朵裝飾
-- 可設定 Windows 開機自動啟動
-- 可選日期區間的互動式歷史分析
-- 星期平均、舒適機率熱圖、每日平均與 P90
-- 推薦各星期較適合的連續一小時
+Greener slots more often met the comfort rule; stars mark the best observed start time per weekday. These are historical examples, not live forecasts; low-sample slots are less reliable.
 
-## 舒適時段定義
+**Comfort rule:** at least 90% of readings in a continuous 60-minute window are ≤30 people. Incomplete windows and gaps longer than five minutes are excluded.
 
-> 連續 60 分鐘內，至少 90% 的觀測值不超過 30 人。
+## Get started
 
-資料不足、邊界缺漏或中斷超過五分鐘的時段不列入推薦。
+Requires **Windows and Python 3.10+** with Tkinter. Tested locally with Python 3.13.
 
-## 安裝與執行
-
-```bash
+```powershell
 git clone https://github.com/yao02201/NCU-GYM-Real-Time-Monitor.git
 cd NCU-GYM-Real-Time-Monitor
-python -m pip install -r requirements.txt
-python gym.py
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\pythonw.exe gym.pyw
 ```
 
-Windows 使用者也可以執行 `gym.pyw`，啟動時不會顯示命令列視窗。
+To see console output, run `.\.venv\Scripts\python.exe gym.py` instead. Keep this project folder in place after enabling launch at startup.
 
-## 操作
+**Controls:** drag the content to move · drag an edge to resize · click a color dot to change theme · right-click for history, startup, and exit · `Esc` to close.
 
-- 拖曳內容：移動視窗
-- 拖曳邊框：調整大小
-- 點選色點：切換主題
-- 滑鼠右鍵：開啟歷史分析或切換開機自啟
-- `Esc`：關閉
+Open the history dashboard separately:
 
-歷史分析也可獨立執行：
-
-```bash
-python gym_dashboard.py
+```powershell
+.\.venv\Scripts\python.exe gym_dashboard.py
 ```
 
-命令列分析：
+<details>
+<summary>Development and customization</summary>
 
-```bash
-python gym_analysis.py
-python gym_analysis.py --since 2026-09-01 --until 2027-01-31
+```powershell
+python -m unittest discover -s tests -v
+python gym_analysis.py --since 2026-03-21 --until 2026-04-10
+python tools/preview_widget.py --theme midnight_monitor
 ```
 
-## 注意
+The preview uses demo data and does not fetch readings or alter your normal widget settings. `F1`–`F4` switch themes; `F5`–`F7` show compact, normal, and expanded layouts.
 
-- 官方例行開放時間為 09:00–20:50；臨時休館仍以體育室公告為準。
-- 新產生的 CSV 預設只保留在本機，不會自動提交到 Git。
-- 統計結果會隨累積資料與選擇日期區間而改變。
+```text
+gym.py / gym.pyw       Desktop widget and windowless launcher
+gym_core.py           Feed parser and trend calculation
+gym_analysis.py        One-hour analysis
+gym_dashboard.py       Interactive historical dashboard
+widget_window.py       Resizing and multi-monitor behavior
+monitor_instance.py    Single-instance guard
+gif/                   low / mid / high / close animations
+gym_count/             Daily CSV logs and existing historical samples
+tests/                 Automated checks
+```
+
+New CSV logs, virtual environments, and Python caches are ignored by Git. Window and theme preferences are stored under `%LOCALAPPDATA%\NCUGymMonitor`.
+
+</details>
+
+Data comes from the [NCU PE Office](https://pe.ncu.edu.tw/about/66.html). This is an independent student project. Opening-hour filtering currently uses 09:00–20:50; temporary closures follow official announcements. GIFs and character artwork belong to their respective creators.
+
+---
+
+## 中文簡介
+
+中央大學健身房即時人數小工具，幫你找到比較舒服的一小時。可自由拖移、縮放、切換四種主題，並顯示當日折線與近期趨勢；右鍵可開啟日期區間分析或設定開機啟動。
+
+- **≤30 人**：`Gym time!`；**31–45 人**：`fuwaa`；**≥46 人**：`Stay in lab`。
+- 舒適時段＝連續 60 分鐘內，至少 90% 的紀錄不超過 30 人。
+- 動畫依 `gif/low`、`mid`、`high`、`close` 分類，每個播放 10 秒。
+- 上方展示圖使用示範資料；統計圖為歷史結果，可在 Dashboard 選日期重新分析。
+
+安裝與操作請見上方 **Get started**。新的人數紀錄只存在本機，不會自動上傳。

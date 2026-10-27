@@ -54,13 +54,17 @@ LOG_DIR = os.path.join(BASE_DIR, "gym_count")
 REFRESH_MS = 10_000          # UI refresh every 10 sec
 LOG_INTERVAL_MS = 60_000     # save one point every 60 sec
 GIF_SIZE = (150, 150)
+GIF_CLIP_DURATION_MS = 10_000
+GIF_IMAGE_EXTENSIONS = {".gif", ".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+FLOWER_SCALE = 1.4
+ORNAMENT_HEIGHT = 20
 CHART_MIN_SIZE = (360, 390)
 COMPACT_BREAKPOINT = (350, 180)
 AUTOSTART_VALUE_NAME = "NCUGymRealTimeMonitor"
 
 THEME_PALETTES = {
     "morandi_lace": {
-        "name": "Morandi Rose",
+        "name": "Morandi Violet",
         "window": "#DED1E5",
         "card": "#F4EAF1",
         "text": "#3F2D41",
@@ -71,20 +75,20 @@ THEME_PALETTES = {
         "threshold": "#62A083",
         "hover": "#E8D8E5",
         "ornament": "flowers",
-        "ornament_color": "#B997B4",
-        "flower": "rose",
-        "flower_layout": "staggered",
-        "flower_center": "#886885",
-        "swatch": "#B997B4",
+        "ornament_color": "#A28BBE",
+        "flower": "violet",
+        "flower_layout": "violet_sprig",
+        "flower_center": "#E5CE8D",
+        "swatch": "#A28BBE",
         "states": {
             "loading": ("#A487A7", "#604B63", "#E6D7E7", "Loading"),
-            "comfortable": ("#5E9A7E", "#315E4A", "#D7EADF", "Comfortable"),
-            "moderate": ("#D58B62", "#75442E", "#F2DDD0", "Getting busy"),
-            "busy": ("#CC6680", "#7A3448", "#F0D5DE", "Crowded"),
+            "comfortable": ("#5E9A7E", "#315E4A", "#D7EADF", "Gym time!"),
+            "moderate": ("#D58B62", "#75442E", "#F2DDD0", "fuwaa"),
+            "busy": ("#CC6680", "#7A3448", "#F0D5DE", "Stay in lab"),
         },
     },
     "peach_cream": {
-        "name": "Buttercream Blossom",
+        "name": "Botanical Cream",
         "window": "#E6D5CE",
         "card": "#F5EAE4",
         "text": "#493532",
@@ -95,16 +99,18 @@ THEME_PALETTES = {
         "threshold": "#6E9A7D",
         "hover": "#ECDCD5",
         "ornament": "flowers",
-        "ornament_color": "#F0CDBB",
-        "flower": "buttercup",
-        "flower_layout": "bottom",
+        "ornament_color": "#F6DBBC",
+        "flower": "leafy_blossom",
+        "leaf_color": "#91A486",
+        "leaf_vein": "#6E8767",
+        "flower_layout": "botanical",
         "flower_center": "#D99A69",
         "swatch": "#D49A8B",
         "states": {
             "loading": ("#B18A82", "#684D48", "#E9D7D1", "Loading"),
-            "comfortable": ("#639477", "#365B48", "#D9E7DD", "Comfortable"),
-            "moderate": ("#CC875B", "#75462E", "#F0D9C9", "Getting busy"),
-            "busy": ("#C66076", "#793748", "#EED3DA", "Crowded"),
+            "comfortable": ("#639477", "#365B48", "#D9E7DD", "Gym time!"),
+            "moderate": ("#CC875B", "#75462E", "#F0D9C9", "fuwaa"),
+            "busy": ("#C66076", "#793748", "#EED3DA", "Stay in lab"),
         },
     },
     "blush_pink": {
@@ -121,24 +127,43 @@ THEME_PALETTES = {
         "ornament": "flowers",
         "ornament_color": "#E27891",
         "flower": "sakura",
+        "flower_scale": 0.8,
         "flower_layout": "diagonal",
         "flower_center": "#AF5066",
         "swatch": "#EDACBA",
         "states": {
             "loading": ("#C18B97", "#704D55", "#EFD8DD", "Loading"),
-            "comfortable": ("#66917A", "#385B4A", "#D8E6DE", "Comfortable"),
-            "moderate": ("#C88A61", "#71472F", "#EFDBC9", "Getting busy"),
-            "busy": ("#D0647D", "#7A3A49", "#F2D4DB", "Crowded"),
+            "comfortable": ("#66917A", "#385B4A", "#D8E6DE", "Gym time!"),
+            "moderate": ("#C88A61", "#71472F", "#EFDBC9", "fuwaa"),
+            "busy": ("#D0647D", "#7A3A49", "#F2D4DB", "Stay in lab"),
+        },
+    },
+    "midnight_monitor": {
+        "name": "Midnight Monitor",
+        "window": "#11141A",
+        "card": "#181C24",
+        "text": "#E1E6ED",
+        "muted": "#9BA6B7",
+        "line": "#303846",
+        "series": "#91B5DA",
+        "series_soft": "#242F40",
+        "threshold": "#6F8198",
+        "hover": "#29313D",
+        "ornament": "none",
+        "flower": None,
+        "flower_layout": "none",
+        "swatch": "#53657C",
+        "states": {
+            "loading": ("#8390A3", "#B7C3D4", "#252C38", "Loading"),
+            "comfortable": ("#8EADD0", "#CDDCF0", "#243142", "Gym time!"),
+            "moderate": ("#A4B2C6", "#D5DFED", "#2B3442", "fuwaa"),
+            "busy": ("#C3CBD7", "#E6EAF1", "#343B47", "Stay in lab"),
         },
     },
 }
 DEFAULT_THEME_KEY = "morandi_lace"
 
-GIF_FILES = {
-    "low": os.path.join(GIF_DIR, "gymtime.gif"),
-    "mid": os.path.join(GIF_DIR, "blueguy.gif"),
-    "high": os.path.join(GIF_DIR, "usingcomputer.gif")
-}
+GIF_DIRECTORIES = {level: Path(GIF_DIR) / level for level in ("low", "mid", "high", "close")}
 
 state = {
     "csv_url": None,
@@ -356,7 +381,7 @@ def fetch_count():
 
 
 # ===== GIF =====
-def load_gif(path):
+def load_gif(path, *, fit_canvas=False):
     if not os.path.exists(path):
         print("Missing GIF:", path)
         return [], []
@@ -364,16 +389,22 @@ def load_gif(path):
     frames, delays = [], []
 
     try:
-        img = Image.open(path)
+        with Image.open(path) as img:
+            for frame in ImageSequence.Iterator(img):
+                delay = frame.info.get("duration", 100) or 100
 
-        for frame in ImageSequence.Iterator(img):
-            delay = frame.info.get("duration", 100) or 100
+                frame = frame.convert("RGBA")
+                frame.thumbnail(GIF_SIZE)
+                if fit_canvas:
+                    padded = Image.new("RGBA", GIF_SIZE, (0, 0, 0, 0))
+                    padded.paste(frame, (
+                        (GIF_SIZE[0] - frame.width) // 2,
+                        (GIF_SIZE[1] - frame.height) // 2,
+                    ))
+                    frame = padded
 
-            frame = frame.convert("RGBA")
-            frame.thumbnail(GIF_SIZE)
-
-            frames.append(ImageTk.PhotoImage(frame))
-            delays.append(delay)
+                frames.append(ImageTk.PhotoImage(frame))
+                delays.append(delay)
 
     except Exception as e:
         print(f"Failed to load GIF {path}:", e)
@@ -381,16 +412,53 @@ def load_gif(path):
     return frames, delays
 
 
+def repeat_gif_for_duration(frames, delays, duration_ms=GIF_CLIP_DURATION_MS):
+    """Loop a clip at its original speed until its allotted display time ends."""
+
+    samples = list(zip(frames, delays))
+    if not samples:
+        return [], []
+    output_frames, output_delays = [], []
+    remaining = duration_ms
+    index = 0
+    while remaining > 0:
+        frame, delay = samples[index % len(samples)]
+        delay = min(max(20, int(delay)), remaining)
+        output_frames.append(frame)
+        output_delays.append(delay)
+        remaining -= delay
+        index += 1
+    return output_frames, output_delays
+
+
+def load_gif_playlist(directory):
+    """Load every supported image in a category for ten seconds per file."""
+
+    frames, delays = [], []
+    if not directory.is_dir():
+        return frames, delays
+    paths = sorted(
+        (path for path in directory.iterdir() if path.is_file() and path.suffix.lower() in GIF_IMAGE_EXTENSIONS),
+        key=lambda path: path.name.casefold(),
+    )
+    for path in paths:
+        clip_frames, clip_delays = load_gif(path, fit_canvas=True)
+        clip_frames, clip_delays = repeat_gif_for_duration(clip_frames, clip_delays)
+        frames.extend(clip_frames)
+        delays.extend(clip_delays)
+    return frames, delays
+
+
 def load_all_gifs():
     state["gif_sets"] = {
-        key: load_gif(path)
-        for key, path in GIF_FILES.items()
+        key: load_gif_playlist(directory)
+        for key, directory in GIF_DIRECTORIES.items()
     }
 
 
 def select_gif_key(count):
     if count is None:
-        return "mid"
+        return "close"
 
     if count <= COMFORT_THRESHOLD:
         return "low"
@@ -401,10 +469,19 @@ def select_gif_key(count):
     return "high"
 
 
+def set_gif_key(key):
+    """Reset playback only when the animation changes, not on every poll."""
+
+    if key != state["gif_key"]:
+        state["gif_key"] = key
+        state["gif_index"] = 0
+
+
 def animate_gif():
     frames, delays = state["gif_sets"].get(state["gif_key"], ([], []))
 
     if not frames:
+        gif_label.config(image="")
         root.after(300, animate_gif)
         return
 
@@ -453,6 +530,8 @@ def load_theme_preference():
     try:
         data = json.loads(theme_preference_path().read_text(encoding="utf-8"))
         theme_key = data.get("theme")
+        if theme_key in ("mint_chocolate", "midnight_racer"):
+            theme_key = "midnight_monitor"
         if theme_key in THEME_PALETTES:
             return theme_key
     except (OSError, ValueError, TypeError, AttributeError):
@@ -487,34 +566,56 @@ def draw_ornament():
     for canvas, horizontal, edge in canvases:
         canvas.delete("all")
         canvas.config(bg=theme["card"])
+        if theme["ornament"] == "none":
+            continue
         length = canvas.winfo_width() if horizontal else canvas.winfo_height()
         length = max(length, 40)
         positions = _ornament_positions(theme["flower_layout"], edge, length)
-        for position in positions:
-            center_x, center_y = (position, 7) if horizontal else (7, position)
+        for index, position in enumerate(positions):
+            center = ORNAMENT_HEIGHT / 2
+            small_blossom = (
+                (theme["flower_layout"], edge)
+                in (("botanical", "bottom"), ("violet_sprig", "top"))
+                and index == 1
+            )
+            if small_blossom:
+                center += 1.5
+            center_x, center_y = (position, center) if horizontal else (7, position)
+            existing_items = len(canvas.find_all())
             _draw_theme_flower(
                 canvas,
-                center_x,
-                center_y,
+                center_x / FLOWER_SCALE,
+                center_y / FLOWER_SCALE,
                 theme,
                 horizontal,
             )
+            blossom_scale = theme.get("flower_scale", 1.0) * (0.8 if small_blossom else 1.0)
+            if blossom_scale != 1.0:
+                for item in canvas.find_all()[existing_items:]:
+                    canvas.scale(
+                        item, center_x / FLOWER_SCALE, center_y / FLOWER_SCALE,
+                        blossom_scale, blossom_scale,
+                    )
+        canvas.scale("all", 0, 0, FLOWER_SCALE, FLOWER_SCALE)
 
 
 def _ornament_positions(layout, edge, length):
     """Place each flower species where its silhouette reads most naturally."""
 
-    if layout == "staggered":
-        # Float the roses through the horizontal borders with uneven rhythm and
-        # generous margins. This keeps them decorative without boxing the card
-        # into four heavy corner clusters.
-        fractions = {
-            "top": (0.25, 0.52, 0.79),
-            "bottom": (0.14, 0.39, 0.66, 0.88),
-        }.get(edge, ())
-        values = (round(length * fraction) for fraction in fractions)
-    elif layout == "bottom":
-        values = range(14, length - 7, 30) if edge == "bottom" else ()
+    if layout == "violet_sprig":
+        if edge == "top":
+            values = (length - 57, length - 24) if length >= 90 else (length - 24,)
+        elif edge == "bottom":
+            values = (32,)
+        else:
+            values = ()
+    elif layout == "botanical":
+        if edge == "top":
+            values = (length - 22,)
+        elif edge == "bottom":
+            values = (20, 49) if length >= 90 else (20,)
+        else:
+            values = ()
     elif layout == "sides":
         values = range(14, length - 7, 30) if edge in ("left", "right") else ()
     elif layout == "diagonal":
@@ -524,6 +625,8 @@ def _ornament_positions(layout, edge, length):
             values = (12, 46, 80)
         else:
             values = ()
+    elif layout == "none":
+        values = ()
     else:
         values = range(12, length - 7, 34)
 
@@ -551,9 +654,25 @@ def _draw_theme_flower(canvas, center_x, center_y, theme, horizontal):
     center = theme["flower_center"]
     flower = theme["flower"]
 
-    if flower == "buttercup":
-        # Five softly overlapping petals read more clearly at this tiny scale
-        # than the previous thin daisy spokes.
+    if flower == "leafy_blossom":
+        # Place pointed leaves behind the blossom so the petals stay distinct.
+        for direction in (-1, 1):
+            canvas.create_polygon(
+                center_x + direction * 2.5, center_y + 2,
+                center_x + direction * 5, center_y - 1.5,
+                center_x + direction * 9, center_y + 0.5,
+                center_x + direction * 7, center_y + 4,
+                center_x + direction * 2.5, center_y + 2,
+                smooth=True,
+                fill=theme["leaf_color"],
+                outline="",
+            )
+            canvas.create_line(
+                center_x + direction * 3, center_y + 2,
+                center_x + direction * 7.5, center_y + 1,
+                fill=theme["leaf_vein"],
+                width=1,
+            )
         offsets = (
             (0, -3.2),
             (3.1, -1.0),
@@ -570,20 +689,27 @@ def _draw_theme_flower(canvas, center_x, center_y, theme, horizontal):
             fill="#F8E8D8",
             outline="",
         )
-    elif flower == "rose":
-        offsets = ((0, -3), (3, -2), (3, 2), (0, 3), (-3, 2), (-3, -2))
-        _draw_petals(canvas, center_x, center_y, offsets, petal, 2.0)
-        canvas.create_arc(
-            center_x - 3,
-            center_y - 3,
-            center_x + 3,
-            center_y + 3,
-            start=25,
-            extent=245,
-            style=tk.ARC,
-            outline=center,
-            width=1,
+    elif flower == "violet":
+        # Two upper petals, two side petals, and a broad lower petal.
+        offsets = ((-2.1, -3), (2.1, -3), (-3.3, 0.6), (3.3, 0.6))
+        _draw_petals(canvas, center_x, center_y, offsets, petal, 2.3)
+        canvas.create_oval(
+            center_x - 2.8,
+            center_y + 0.4,
+            center_x + 2.8,
+            center_y + 5.6,
+            fill="#8E74AC",
+            outline="",
         )
+        for offset_x, offset_y in ((-2.3, 1.2), (2.3, 1.2), (0, 3.5)):
+            canvas.create_line(
+                center_x + offset_x,
+                center_y + offset_y,
+                center_x,
+                center_y,
+                fill="#786092",
+                width=1,
+            )
     else:  # sakura
         offsets = ((0, -4), (4, -1), (2, 4), (-2, 4), (-4, -1))
         _draw_petals(canvas, center_x, center_y, offsets, petal, 2.1)
@@ -665,8 +791,8 @@ def apply_theme(n):
         content,
         gif_label,
         metrics,
-        eyebrow_label,
         count_row,
+        count_details,
         count_label,
         unit_label,
         trend_label,
@@ -682,7 +808,6 @@ def apply_theme(n):
         highlightcolor=theme["line"],
     )
     title.config(fg=theme["text"])
-    eyebrow_label.config(fg=theme["muted"])
     minimize_btn.config(fg=theme["muted"])
     close_btn.config(fg=theme["muted"])
     count_label.config(fg=theme["text"])
@@ -741,6 +866,7 @@ def poll_fetch():
 
 def apply_count(reading):
     if reading.status is not OccupancyStatus.VALID or reading.count is None:
+        set_gif_key(select_gif_key(None))
         if state["last_updated_at"] is None:
             apply_theme(None)
             if reading.status is OccupancyStatus.UNAVAILABLE:
@@ -782,17 +908,14 @@ def apply_count(reading):
     update_trend_display()
     draw_chart()
 
-    new_key = select_gif_key(n)
-    if new_key != state["gif_key"]:
-        state["gif_key"] = new_key
-        state["gif_index"] = 0
+    set_gif_key(select_gif_key(n))
 
 
 def update_trend_display():
     theme = state.get("theme") or get_theme(state.get("count"))
     trend = estimate_trend(state["today_points"])
     if trend is None:
-        trend_var.set("Collecting trend data…")
+        trend_var.set("Trend pending…")
         trend_label.config(fg=theme["muted"])
         return
 
@@ -804,7 +927,7 @@ def update_trend_display():
         trend_var.set(f"↘ {rate:+.1f} people / 10 min")
         trend_label.config(fg=theme["trend_down"])
     else:
-        trend_var.set(f"→ {rate:+.1f} people / 10 min · Steady")
+        trend_var.set(f"→ {rate:+.1f} people / 10 min")
         trend_label.config(fg=theme["muted"])
 
 
@@ -1007,7 +1130,7 @@ def update_responsive_layout(e=None):
     else:
         compact_body.pack_forget()
         if not full_body.winfo_manager():
-            full_body.pack(fill="both", expand=True, padx=14, pady=14)
+            full_body.pack(fill="both", expand=True, padx=14, pady=ORNAMENT_HEIGHT)
 
         if show_gif and not gif_label.winfo_manager():
             gif_label.pack(side="right", padx=(16, 0), after=metrics)
@@ -1019,7 +1142,7 @@ def update_responsive_layout(e=None):
                 fill="both",
                 expand=True,
                 padx=16,
-                pady=(4, 12),
+                pady=(2, 12),
                 after=trend_label,
             )
         elif not show_chart:
@@ -1217,7 +1340,8 @@ def main():
     global ornament_top, ornament_bottom, ornament_left, ornament_right
     global top, title, status_badge, theme_picker_canvas
     global minimize_btn, close_btn, content
-    global gif_label, metrics, eyebrow_label, count_row, count_var, count_label
+    global gif_label, metrics, count_row, count_var, count_label
+    global count_details
     global unit_label, trend_var, trend_label, chart_section
     global chart_header, chart_title, chart_canvas, resize_grip
     global autostart_var, context_menu
@@ -1241,18 +1365,18 @@ def main():
     card = tk.Frame(outer, highlightthickness=1)
     card.pack(fill="both", expand=True)
 
-    ornament_top = tk.Canvas(card, height=14, highlightthickness=0)
-    ornament_bottom = tk.Canvas(card, height=14, highlightthickness=0)
+    ornament_top = tk.Canvas(card, height=ORNAMENT_HEIGHT, highlightthickness=0)
+    ornament_bottom = tk.Canvas(card, height=ORNAMENT_HEIGHT, highlightthickness=0)
     ornament_left = tk.Canvas(card, width=14, highlightthickness=0)
     ornament_right = tk.Canvas(card, width=14, highlightthickness=0)
-    ornament_top.place(x=14, y=0, relwidth=1.0, width=-28, height=14)
+    ornament_top.place(x=14, y=0, relwidth=1.0, width=-28, height=ORNAMENT_HEIGHT)
     ornament_bottom.place(
         x=14,
         rely=1.0,
-        y=-14,
+        y=-ORNAMENT_HEIGHT,
         relwidth=1.0,
         width=-28,
-        height=14,
+        height=ORNAMENT_HEIGHT,
     )
     ornament_left.place(x=0, y=14, width=14, relheight=1.0, height=-28)
     ornament_right.place(
@@ -1284,32 +1408,32 @@ def main():
     compact_count_label.pack(side="left")
     compact_unit_label = tk.Label(
         compact_count_row,
-        text="ppl",
+        text="people",
         font=("Segoe UI", 12),
     )
     compact_unit_label.pack(side="left", anchor="s", pady=(0, 10))
 
     full_body = tk.Frame(card)
-    full_body.pack(fill="both", expand=True, padx=14, pady=14)
+    full_body.pack(fill="both", expand=True, padx=14, pady=ORNAMENT_HEIGHT)
 
     top = tk.Frame(full_body)
-    top.pack(fill="x", padx=16, pady=(8, 0))
+    top.pack(fill="x", padx=16, pady=(2, 0))
 
     title = tk.Label(
         top,
         text="NCU GYM",
-        font=("Segoe UI", 11, "bold"),
+        font=("Segoe UI", 13, "bold"),
     )
     title.pack(side="left")
 
     status_badge = tk.Label(
         top,
         text="●  Loading",
-        font=("Segoe UI", 9, "bold"),
-        padx=8,
+        font=("Segoe UI", 10, "bold"),
+        padx=6,
         pady=3,
     )
-    status_badge.pack(side="left", padx=(10, 0))
+    status_badge.pack(side="left", padx=(8, 0))
 
     theme_picker_canvas = tk.Canvas(
         top,
@@ -1341,18 +1465,10 @@ def main():
     theme_picker_canvas.pack(side="right", padx=(0, 5))
 
     content = tk.Frame(full_body)
-    content.pack(fill="x", padx=16, pady=(10, 6))
+    content.pack(fill="x", padx=16, pady=(6, 0))
 
     metrics = tk.Frame(content)
     metrics.pack(side="left", fill="both", expand=True)
-
-    eyebrow_label = tk.Label(
-        metrics,
-        text="CURRENT COUNT",
-        font=("Segoe UI", 10, "bold"),
-        anchor="w",
-    )
-    eyebrow_label.pack(fill="x")
 
     count_row = tk.Frame(metrics)
     count_row.pack(fill="x")
@@ -1363,15 +1479,17 @@ def main():
         anchor="w",
     )
     count_label.pack(side="left")
+    count_details = tk.Frame(count_row)
+    count_details.pack(side="left", anchor="s", pady=(0, 10), padx=(4, 0))
     unit_label = tk.Label(
-        count_row,
+        count_details,
         text="people",
         font=("Segoe UI", 13),
         anchor="w",
     )
-    unit_label.pack(side="left", anchor="s", pady=(0, 10), padx=(4, 0))
+    unit_label.pack(side="top", anchor="w")
 
-    trend_var = tk.StringVar(value="Collecting trend data…")
+    trend_var = tk.StringVar(value="Trend pending…")
     trend_label = tk.Label(
         full_body,
         textvariable=trend_var,
@@ -1382,14 +1500,14 @@ def main():
     gif_label = tk.Label(content)
     gif_label.pack(side="right", padx=(16, 0))
 
-    trend_label.pack(fill="x", padx=16, pady=(0, 7))
+    trend_label.pack(fill="x", padx=16, pady=(0, 3))
 
     chart_section = tk.Frame(full_body)
     chart_header = tk.Frame(chart_section)
-    chart_header.pack(fill="x", pady=(0, 6))
+    chart_header.pack(fill="x", pady=(0, 4))
     chart_title = tk.Label(
         chart_header,
-        text="TODAY'S OCCUPANCY",
+        text="Today",
         font=("Segoe UI", 11, "bold"),
         anchor="w",
     )
