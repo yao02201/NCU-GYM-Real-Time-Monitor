@@ -11,11 +11,11 @@
 <table>
   <tr>
     <td align="center"><img src="for_git_intro/widget_current.png" width="360" alt="Midnight Monitor dark theme"><br><b>Midnight Monitor</b></td>
-    <td align="center"><img src="for_git_intro/widget_morandi.png" width="360" alt="Morandi Violet theme"><br><b>Morandi Violet</b></td>
+    <td align="center"><img src="for_git_intro/widget_blush.png" width="360" alt="Cherry Blush theme"><br><b>Cherry Blush</b></td>
   </tr>
 </table>
 
-*Small/full views are actual usage screenshots; theme previews use demo data. Widget: English · History dashboard: Traditional Chinese.*
+*Cherry Blush is an actual usage screenshot; Midnight Monitor uses demo data. Widget: English · History dashboard: Traditional Chinese.*
 
 ## What it does
 
