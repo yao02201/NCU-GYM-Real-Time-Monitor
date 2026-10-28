@@ -2,20 +2,11 @@
 
 **Live gym counts on your desktop. Check past crowd trends, pick a quieter hour, and crush your workout. 💪**\
 **中央健人是否受夠人多炸的健身房了💀**\
-**即時人數桌面顯示、歷史人數統計趨勢、讓你挑個舒服的一小時去健爆。**
+**即時人數桌面顯示、歷史人數統計趨勢、讓你挑個舒服的一小時去健爆。 ## 要猛 !!**
 
-## 要猛 !!
+
 
 ## Preview
-
-<table>
-  <tr>
-    <td align="center" valign="top"><b>Small window</b><br><img src="for_git_intro/widget_small.png" width="400" alt="Small widget showing count, GIF, and trend"></td>
-    <td align="center" valign="top"><b>Full window</b><br><img src="for_git_intro/widget_full.png" width="400" alt="Expanded widget showing today's occupancy chart"></td>
-  </tr>
-</table>
-
-Resize for a quick count or the full crowd curve.
 
 <table>
   <tr>
@@ -39,7 +30,6 @@ Resize for a quick count or the full crowd curve.
 | ≥46 people | `Stay in lab` | `gif/high/` |
 | No current reading | `No data` / connection status | `gif/close/` |
 
-Customize the folders with your GIFs or images. Each plays for **10 seconds**, then cycles to the next.
 
 ## Historical results
 
@@ -61,7 +51,7 @@ python gym_analysis.py --threshold 40
 
 This custom threshold applies to the command-line analysis; the dashboard and charts above currently use 30 people.
 
-### What surprised me
+### Something cool..
 
 - **Tuesday mornings aren't like other weekday mornings.** In my observations, they tend to be busier. University or college assembly periods might help explain this pattern, but that explanation hasn't been tested.
 - **Weekend mornings aren't a guaranteed empty gym.** I often noticed a small rise around **10–11 a.m. on Saturdays**—something I had missed before looking at the data. So much for “just go on a weekend morning and have the place to yourself.” 💀
