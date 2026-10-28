@@ -2,7 +2,9 @@
 
 **Live gym counts on your desktop. Check past crowd trends, pick a quieter hour, and crush your workout. 💪**\
 **中央健人是否受夠人多炸的健身房了💀**\
-**即時人數桌面顯示、歷史人數統計趨勢、讓你挑個舒服的一小時去健爆，要猛 !!**
+**即時人數桌面顯示、歷史人數統計趨勢、讓你挑個舒服的一小時去健爆。**
+
+## 要猛 !!
 
 ## Preview
 
@@ -115,6 +117,6 @@ New CSV logs, virtual environments, and Python caches are ignored by Git. Window
 
 **中文展望：** 目前只有即時人數與歷史統計，尚未提供預測。接下來希望納入假日、連假、降雨、氣溫、寒流，以及學期間與寒暑假的作息差異，先做相關性分析，探索讓人數變化難以預期的因素，再檢驗是否能改善預測。
 
-長期希望訓練模型，預測未來 **1–2 小時**的人數與一小時內適合健身的機會，並用未參與訓練的後續日期驗證效果。讓各位中央健人少搶器材、多練幾組——這才是終極目標！
+長期希望訓練模型，預測未來 **1–2 小時**的人數與一小時內適合健身的機會，並用未參與訓練的後續日期驗證效果。讓各位中央健人再也不用搶器材、練到爽死——這才是終極目標！
 
 Independent student project · Data: [NCU PE Office](https://pe.ncu.edu.tw/about/66.html) · Opening-hour filter: 09:00–20:50; closures follow official announcements. GIFs and character artwork belong to their respective creators.
