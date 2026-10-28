@@ -2,7 +2,7 @@
 
 **Live gym counts on your desktop. Check past crowd trends, pick a quieter hour, and crush your workout. 💪**\
 **中央健人是否受夠人多炸的健身房了💀**\
-**即時人數桌面顯示、歷史人數統計趨勢、讓你挑個舒服的一小時去健爆。 ## 要猛 !!**
+**即時人數桌面顯示、歷史人數統計趨勢、讓你挑個舒服的一小時去健爆。 要猛 !!**
 
 
 
